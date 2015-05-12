@@ -11,10 +11,11 @@ Range queries are parsed using [PEG](http://en.wikipedia.org/wiki/Parsing_expres
   * %range1:KEYS == show all the KEYS in range1
   * %range1:FOO == show the value for key FOO in range1
 
-### Operatons:
+### Set Operatons:
   * %range1 , %range2 == union (space is optional)
   * %range1 ^ %range2 == set difference
   * %range1 & %range2 == intersection
+  * %range1,(%range1 & %range2) == set operations with grouping using brackets
 
 ### Advanced Operations
   * %   == toplevel
@@ -27,3 +28,6 @@ I would suggest you to read `rangeexpr.peg` to understand all the possbile query
 
 
 *WIP*, yet to start processing the AST.
+
+### Author
+[Vigith Maurice](https://github.com/vigith)
