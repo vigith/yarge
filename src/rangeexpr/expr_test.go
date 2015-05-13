@@ -188,9 +188,22 @@ func TestParsingComb04(t *testing.T) {
 	}
 }
 
+// "%a-b^%d"
+// valid difference operator query
+func TestParsingComb05(t *testing.T) {
+	var q = "%a1d^d^%e"
+	var r = &RangeExpr{Buffer: q}
+	r.Init()
+	r.Expression.Init(q)
+	err := r.Parse()
+	if err != nil {
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (difference), eg %%foo^%%bar]", q)
+	}
+}
+
 // "%a,(%c^%dd-ee)"
 // union and difference together
-func TestParsingComb05(t *testing.T) {
+func TestParsingComb06(t *testing.T) {
 	var q = "%a,(%c^%dd-ee)"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
