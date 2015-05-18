@@ -1,4 +1,4 @@
-// Author: Vigith Maurice
+# Author: Vigith Maurice
 
 package rangeexpr
 
@@ -19,32 +19,32 @@ rexpr <- sp
 
 cexpr <- sp
    ( union
-   / intersect
+   / intersection
    / difference
    )
    sp
 
 union <- ',' rexpr cexpr? { p.addOperator(typeUnion) }
 
-intersect <- '&' rexpr cexpr? { p.addOperator(typeIntersect) }
+intersection <- '&' rexpr cexpr? { p.addOperator(typeIntersection) }
 
 difference <- '^' rexpr cexpr? { p.addOperator(typeDifference) }
 
-cluster <- '%' rexpr? { p.addClusterOperator(typeClusterLookup) } key?
+cluster <- ('%' < 'RANGE' > { p.addValue(buffer[begin:end]); } / '%' rexpr) { p.addOperator(typeClusterLookup) } key?
 
-key <- ':' < [A-Z0-9]+ > { p.addClusterOperator(typeKeyLookup); p.addValue(buffer[begin:end]); }
+key <- ':' < [A-Z0-9]+ > { p.addOperator(typeKeyLookup); p.addValue(buffer[begin:end]); }
 
-rlookup <- '*' value { p.addClusterOperator(typeKeyReverseLookup) } attr? 
+rlookup <- '*' value { p.addOperator(typeKeyReverseLookup) } attr? 
 
-attr <- ';' < [A-Z0-9]+ > { p.addClusterOperator(typeKeyReverseLookupAttr); p.addValue(buffer[begin:end]); } hint?
+attr <- ';' < [A-Z0-9]+ > { p.addOperator(typeKeyReverseLookupAttr); p.addValue(buffer[begin:end]); } hint?
 
-hint <- { p.addClusterOperator(typeKeyReverseLookupHint) } ':' value 
+hint <- { p.addOperator(typeKeyReverseLookupHint) } ':' value 
 
-# start with [:alpha] followed with [-a-z0-9] followed by [:alphanum]
-value <- < ( first middle+ ) / ( first last? ) > { p.addValue(buffer[begin:end]) }
+# start with [:alpha] [:alphanum]? followed with [-a-z0-9] followed by [:alphanum]
+value <- < ( first last middle+ ) / ( first last? ) > { p.addValue(buffer[begin:end]) }
 # split value into small blocks
 first <- [a-z]+
-middle <- '-' last
+middle <- '-' last 
 last <- [a-z0-9]*
 
 brackets <- '(' combinedexpr ')'
