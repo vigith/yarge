@@ -18,9 +18,9 @@ Range queries are parsed using [PEG](http://en.wikipedia.org/wiki/Parsing_expres
   * %range1,(%range1 & %range2) == set operations with grouping using brackets
 
 ### Advanced Operations
-  * %   == toplevel
-  * %%  == second level
-  * %%range == second level w.r.t range
+  * %RANGE   == toplevel (here RANGE is a keyword)
+  * %%RANGE  == second level (here RANGE is a keyword)
+  * %%range1 == second level w.r.t range1
   * *hostname == get cluster where this hostname is present
   * *value;KEY:HINT == get the cluster where KEY=value, HINT is to scope within a toplevel
 
