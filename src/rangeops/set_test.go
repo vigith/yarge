@@ -4,14 +4,21 @@ import "testing"
 
 // few functions for testing
 
-// Compare 2 Arrays
+// Compare 2 Arrays, items need not be in correct
+// order
 func compare(arr1, arr2 []string) bool {
 	if len(arr1) != len(arr2) {
 		return false
 	}
 
-	for index, value := range arr1 {
-		if value != arr2[index] {
+	var flag bool
+	for _, value1 := range arr1 {
+		for _, value2 := range arr2 {
+			if value1 == value2 {
+				flag = true
+			}
+		}
+		if !flag {
 			return false
 		}
 	}
@@ -123,5 +130,26 @@ func TestDifference01(t *testing.T) {
 	Difference(&set1, &set2, &res)
 	if !compare(res, set1) {
 		t.Errorf("Expected NO Error, Difference should return set1, because set2 and set1 are mutuall exclusive, set1 %s set2 %s : result %s", set1, set2, res)
+	}
+}
+
+// Array to Set
+func TestArrayToSet01(t *testing.T) {
+	var set1 = []string{}
+	ArrayToSet(&set1)
+	if !compare(set1, []string{}) {
+		t.Errorf("Expected NO Error, set is empty, so ArrayToSet should return empty set, set1 %s : result %s", set1, []string{})
+	}
+
+	set1 = []string{"foo", "bar", "moo"}
+	ArrayToSet(&set1)
+	if !compare(set1, []string{"foo", "moo", "bar"}) {
+		t.Errorf("Expected NO Error, ArrayToSet should return set1 after removing duplicates, set1 %s : result %s", set1, []string{"foo", "moo", "bar"})
+	}
+
+	set1 = []string{"foo", "foo", "bar", "moo", "bar"}
+	ArrayToSet(&set1)
+	if !compare(set1, []string{"foo", "moo", "bar"}) {
+		t.Errorf("Expected NO Error, ArrayToSet should return set1 after removing duplicates, set1 %s : result %s", set1, []string{"foo", "moo", "bar"})
 	}
 }
