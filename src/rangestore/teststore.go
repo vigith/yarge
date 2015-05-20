@@ -5,7 +5,6 @@ package rangestore
 
 import (
 	"errors"
-	"fmt"
 	"rangeops"
 )
 
@@ -209,7 +208,7 @@ func queryMap(cluster string, key string) (*[]string, error) {
 		}
 	}
 
-	return nil, nil
+	return &[]string{}, errors.New("No entry found")
 }
 
 // test clusterlookup
@@ -244,7 +243,6 @@ func (t *TestStore) KeyLookup(cluster *[]string, key string) (*[]string, error) 
 		if err != nil {
 			return &[]string{}, errors.New("Mock Map Failed!!")
 		}
-		fmt.Println(result)
 		results = append(results, *result...)
 	}
 
@@ -255,11 +253,11 @@ func (t *TestStore) KeyLookup(cluster *[]string, key string) (*[]string, error) 
 
 func queryMapRev(key string, attr string, hint string) (*[]string, error) {
 	switch key {
-	case "range1001.ops.sharethis.com", "range1002.ops.sharethis.com", "range1003.ops.sharethis.com":
+	case "range1001.ops.example.com", "range1002.ops.example.com", "range1003.ops.example.com":
 		return &[]string{"ops-prod-vpc1-range"}, nil
-	case "mon1001.ops.sharethis.com":
+	case "mon1001.ops.example.com":
 		return &[]string{"ops-prod-vpc1-mon"}, nil
-	case "mon1002.ops.sharethis.com":
+	case "mon1002.ops.example.com":
 		return &[]string{"ops-prod-vpc2-mon"}, nil
 
 	case "data1001.data.example.com", "data1002.data.example.com", "data1003.data.example.com":
@@ -298,7 +296,12 @@ func (t *TestStore) KeyReverseLookup(key string) (*[]string, error) {
 		return &[]string{}, errors.New("I am asked to return 'error'")
 	}
 
-	return &[]string{"node1"}, nil
+	result, err := queryMapRev(key, "", "")
+	if err != nil {
+		return &[]string{}, errors.New("Mock Reverse Map Failed!!")
+	}
+
+	return result, nil
 }
 
 // test KeyReverseLookupAttr
@@ -307,7 +310,12 @@ func (t *TestStore) KeyReverseLookupAttr(key string, attr string) (*[]string, er
 		return &[]string{}, errors.New("I am asked to return 'error'")
 	}
 
-	return &[]string{"node2"}, nil
+	result, err := queryMapRev(key, attr, "")
+	if err != nil {
+		return &[]string{}, errors.New("Mock Reverse Map Failed!!")
+	}
+
+	return result, nil
 }
 
 // test KeyReverseLookupHint
@@ -316,5 +324,10 @@ func (t *TestStore) KeyReverseLookupHint(key string, attr string, hint string) (
 		return &[]string{}, errors.New("I am asked to return 'error'")
 	}
 
-	return &[]string{"node3"}, nil
+	result, err := queryMapRev(key, attr, hint)
+	if err != nil {
+		return &[]string{}, errors.New("Mock Reverse Map Failed!!")
+	}
+
+	return result, nil
 }
