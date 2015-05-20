@@ -2,7 +2,11 @@ package rangeexpr
 
 import (
 	"testing"
+
+	"rangestore"
 )
+
+var store, err = rangestore.ConnectTestStore("Test Store") // this can never return error
 
 // ""
 // empty string
@@ -41,12 +45,17 @@ func TestParsing02(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [starts with a-z]", q)
 	}
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	if len(errs) != 0 || !compare(*result, []string{"a"}) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", []string{"ops"}, *result)
+	}
 }
 
-// "%a"
+// "%ops"
 // starts with a alphabet
 func TestParsing03(t *testing.T) {
-	var q = "%a"
+	var q = "%ops"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
@@ -54,12 +63,18 @@ func TestParsing03(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [starts with %%[a-z]]", q)
 	}
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"prod"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", expected, *result)
+	}
 }
 
-// "%a-b-c-d"
+// "%aa1-b-c-d1"
 // valid cluster string, but contains %
 func TestParsing04(t *testing.T) {
-	var q = "%a-d-c"
+	var q = "%aa1-b-c-d1"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
@@ -96,7 +111,7 @@ func TestParsing06(t *testing.T) {
 }
 
 // "%a-b-%d"
-// valid intersection operator query
+// invalid ends with -%d
 func TestParsing07(t *testing.T) {
 	var q = "%a-b-%d"
 	var r = &RangeExpr{Buffer: q}
@@ -108,10 +123,10 @@ func TestParsing07(t *testing.T) {
 	}
 }
 
-// "%"
-// valid intersection operator query
+// "%RANGE"
+// Top Level
 func TestParsing08(t *testing.T) {
-	var q = "%"
+	var q = "%RANGE"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
@@ -119,18 +134,31 @@ func TestParsing08(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Top Level Lookup, %, %% etc]", q)
 	}
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"ops", "data"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", expected, *result)
+	}
 }
 
-// "%%"
+// "%%RANGE"
 // valid intersection operator query
 func TestParsing09(t *testing.T) {
-	var q = "%%"
+	var q = "%%RANGE"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
 	err := r.Parse()
 	if err != nil {
 		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Top Level Lookup, %, %% etc]", q)
+	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"prod", "qa"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
 	}
 }
 
@@ -165,20 +193,27 @@ func TestParsingComb02(t *testing.T) {
 // "%a-b&%d"
 // valid intersection operator query
 func TestParsingComb03(t *testing.T) {
-	var q = "%ab-cd&%d"
+	var q = "%ops-prod & %data-prod"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
 	err := r.Parse()
 	if err != nil {
-		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (intersect), eg %%foo&%%bar]", q)
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (intersection), eg %%foo&%%bar]", q)
+	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"vpc1", "vpc2"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
 	}
 }
 
 // "%a-b^%d"
 // valid difference operator query
 func TestParsingComb04(t *testing.T) {
-	var q = "%a1d^d"
+	var q = "%ops ^ %data"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
@@ -186,12 +221,19 @@ func TestParsingComb04(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (difference), eg %%foo^%%bar]", q)
 	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
 }
 
-// "%a-b^%d"
+// "%data-prod ^ %ops-prod ^ vpc2"
 // valid difference operator query
 func TestParsingComb05(t *testing.T) {
-	var q = "%a1d^d^%e"
+	var q = "%data-prod ^ %ops-prod ^ vpc2"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
@@ -199,12 +241,19 @@ func TestParsingComb05(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (difference), eg %%foo^%%bar]", q)
 	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"vpc2", "vpc3"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
 }
 
-// "%a,(%c^%dd-ee)"
-// union and difference together
+// "(%date-prod ^ %ops-prod) ^ vpc2"
+// difference with grouping together
 func TestParsingComb06(t *testing.T) {
-	var q = "%a,(%c^%dd-ee)"
+	var q = "(%data-prod ^ %ops-prod) ^ vpc2"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
@@ -212,14 +261,81 @@ func TestParsingComb06(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (union, difference), eg (%%foo^%%bar),%%cow]", q)
 	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"vpc3"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
+}
+
+// "%ops-prod, (%data-prod ^ vpc2)"
+// union and difference together
+func TestParsingComb07(t *testing.T) {
+	var q = "%ops-prod, (%data-prod ^ vpc2)"
+	var r = &RangeExpr{Buffer: q}
+	r.Init()
+	r.Expression.Init(q)
+	err := r.Parse()
+	if err != nil {
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (union, difference), eg (%%foo^%%bar),%%cow]", q)
+	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"vpc2", "vpc3", "vpc1"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
+}
+
+// "(%ops-prod & vpc2) , %data-prod ^ vpc2"
+// union, difference and intersection together
+func TestParsingComb08(t *testing.T) {
+	var q = "(%ops-prod & vpc2) , %data-prod ^ vpc2"
+	var r = &RangeExpr{Buffer: q}
+	r.Init()
+	r.Expression.Init(q)
+	err := r.Parse()
+	if err != nil {
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (union, difference), eg (%%foo^%%bar),%%cow]", q)
+	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"vpc2", "vpc3", "vpc1"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
+}
+
+// "%ops-prod & (vpc2 , %data-prod) ^ vpc2"
+// union, difference and intersection together
+func TestParsingComb09(t *testing.T) {
+	var q = "%ops-prod & (vpc2 , %data-prod) ^ vpc2"
+	var r = &RangeExpr{Buffer: q}
+	r.Init()
+	r.Expression.Init(q)
+	err := r.Parse()
+	if err != nil {
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (union, difference), eg (%%foo^%%bar),%%cow]", q)
+	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"vpc1"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
 }
 
 /* KEYS, etc */
 
-// "%aa-bb-cc:DD"
-// union and difference together
+// "%aa1-bb-cc:DD"
+// upper case key
 func TestParsingMisc01(t *testing.T) {
-	var q = "%aa-bb-cc:DD"
+	var q = "%aa1-bb-cc:DD"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
@@ -229,8 +345,8 @@ func TestParsingMisc01(t *testing.T) {
 	}
 }
 
-// "%aa-bb-cc:DD"
-// union and difference together
+// "%aa-bb-cc:key"
+// lower case key
 func TestParsingMisc02(t *testing.T) {
 	var q = "%aa-bb-cc:key"
 	var r = &RangeExpr{Buffer: q}
@@ -240,4 +356,73 @@ func TestParsingMisc02(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected Error, (Query: %s) should NOT BE parsed [ Keys should be always UPPERCASE, eg (%%foo:BAR)]", q)
 	}
+}
+
+// Reverse Lookup
+
+// "*aa"
+// Reverse Lookup
+func TestRevParsing01(t *testing.T) {
+	var q = "*aa"
+	var r = &RangeExpr{Buffer: q}
+	r.Init()
+	r.Expression.Init(q)
+	err := r.Parse()
+	if err != nil {
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [basic reverse lookup]", q)
+	}
+}
+
+// "*aa;B"
+// Reverse Lookup with Attr
+func TestRevParsing02(t *testing.T) {
+	var q = "*aa"
+	var r = &RangeExpr{Buffer: q}
+	r.Init()
+	r.Expression.Init(q)
+	err := r.Parse()
+	if err != nil {
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [reverse lookup with attr]", q)
+	}
+}
+
+// "*aa;B:c"
+// Reverse Lookup with Attr and Hint
+func TestRevParsing03(t *testing.T) {
+	var q = "*aa;B:c"
+	var r = &RangeExpr{Buffer: q}
+	r.Init()
+	r.Expression.Init(q)
+	err := r.Parse()
+	if err != nil {
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [reverse lookup with attr and hint]", q)
+	}
+}
+
+// Internal Function
+
+// Compare 2 Arrays, items need not be in correct
+// order
+func compare(arr1, arr2 []string) bool {
+	if len(arr1) != len(arr2) {
+		return false
+	}
+
+	if len(arr1) == 0 {
+		return true
+	}
+
+	var flag bool
+	for _, value1 := range arr1 {
+		for _, value2 := range arr2 {
+			if value1 == value2 {
+				flag = true
+			}
+		}
+		if !flag {
+			return false
+		}
+	}
+
+	return true
 }
