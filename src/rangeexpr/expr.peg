@@ -34,11 +34,11 @@ cluster <- ('%' < 'RANGE' > { p.addValue(buffer[begin:end]); } / '%' rexpr) { p.
 
 key <- ':' < [A-Z0-9]+ > { p.addOperator(typeKeyLookup); p.addValue(buffer[begin:end]); }
 
-rlookup <- '*' [[a-z0-9 ]]+ { p.addValue(buffer[begin:end]); p.addOperator(typeKeyReverseLookup) } attr? 
+rlookup <- '*' < [[a-z0-9 .]]+ > { p.addValue(buffer[begin:end]); p.addOperator(typeKeyReverseLookup); } attr? cexpr?
 
-attr <- ';' < [A-Z0-9]+ > { p.addOperator(typeKeyReverseLookupAttr); p.addValue(buffer[begin:end]); } hint?
+attr <- ';' < [A-Z0-9]+ > { p.addValue(buffer[begin:end]); p.addOperator(typeKeyReverseLookupAttr); } hint?
 
-hint <- { p.addOperator(typeKeyReverseLookupHint) } ':' value 
+hint <- ':' value { p.addOperator(typeKeyReverseLookupHint) } 
 
 # start with [:alpha] [:alphanum]? followed with [-a-z0-9] followed by [:alphanum]
 value <- < ( first last middle+ ) / ( first last? ) > { p.addValue(buffer[begin:end]) }
