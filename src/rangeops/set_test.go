@@ -11,6 +11,10 @@ func compare(arr1, arr2 []string) bool {
 		return false
 	}
 
+	if len(arr1) == 0 {
+		return true
+	}
+
 	var flag bool
 	for _, value1 := range arr1 {
 		for _, value2 := range arr2 {
@@ -116,8 +120,8 @@ func TestDifference01(t *testing.T) {
 		t.Errorf("Expected NO Error, both sets are empty, so Difference should return empty set, set1 %s set2 %s : result %s", set1, set2, res)
 	}
 
-	set1 = []string{"foo", "bar", "moo"}
-	set2 = []string{"bar"}
+	set1 = []string{"bar", "cow"}
+	set2 = []string{"foo", "bar", "moo"}
 	res = make([]string, 0)
 	Difference(&set1, &set2, &res)
 	if !compare(res, []string{"foo", "moo"}) {

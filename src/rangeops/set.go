@@ -75,25 +75,9 @@ func Intersection(set1 *[]string, set2 *[]string, r *[]string) {
 //     A - B = {1}
 // ie, A - B = { x <- A | x !<- B }
 func Difference(set1 *[]string, set2 *[]string, r *[]string) {
-	// * find the larger and shorter of the 2 sets
-	// * iterate over the larger set and append
-	//   if that element is not in the shorter set
-	var longer *[]string
-	var shorter *[]string
-
-	// find who is the larger and shorter, then
-	// set the pointers	accordingly
-	if len(*set1) >= len(*set2) {
-		longer = set1
-		shorter = set2
-	} else {
-		longer = set2
-		shorter = set1
-	}
-
-	// insert if larger not present in shorter
-	for _, elem := range *longer {
-		if !contains(shorter, elem) {
+	// insert if set1 not present in set2
+	for _, elem := range *set1 {
+		if !contains(set2, elem) {
 			*r = append(*r, elem)
 		}
 	}
