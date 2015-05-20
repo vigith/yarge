@@ -34,7 +34,7 @@ cluster <- ('%' < 'RANGE' > { p.addValue(buffer[begin:end]); } / '%' rexpr) { p.
 
 key <- ':' < [A-Z0-9]+ > { p.addOperator(typeKeyLookup); p.addValue(buffer[begin:end]); }
 
-rlookup <- '*' value { p.addOperator(typeKeyReverseLookup) } attr? 
+rlookup <- '*' [[a-z0-9 ]]+ { p.addValue(buffer[begin:end]); p.addOperator(typeKeyReverseLookup) } attr? 
 
 attr <- ';' < [A-Z0-9]+ > { p.addOperator(typeKeyReverseLookupAttr); p.addValue(buffer[begin:end]); } hint?
 
