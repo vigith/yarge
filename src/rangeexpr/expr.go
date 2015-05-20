@@ -143,13 +143,14 @@ func (e *Expression) Evaluate(s interface{}) (*[]string, []error) {
 			if err != nil {
 				errs = append(errs, err)
 			}
+			ptr++
 
 		// Reverse Lookup
 		// --------------
-		// if type == ReverseKeyLookup, peek 1 ahead to check whether it is a
+		// if type == ReverseKeyLookup, peek 2 ahead to check whether it is a
 		// ReverseKeyLookupAttr, if yes continue and let ReverseKeyLookupAttr
 		// take care of expanding, else expand in place
-		// if type == ReverseKeyLookupAttr, peek 1 ahead to check whether it is a
+		// if type == ReverseKeyLookupAttr, peek 2 ahead to check whether it is a
 		// ReverseLookupHint, if yes continue and let ReverseLookupHint take care
 		// of expanding
 		// if type == ReverseKeyLookupHint, take the values from the stack and
@@ -160,18 +161,18 @@ func (e *Expression) Evaluate(s interface{}) (*[]string, []error) {
 		//   stack => [ nil, [d1,], ] <= push d1
 		//   stack => [ nil, reverse([d1,]), ] <= ReverseKeyLookup (inplace)
 		// Case 2:
-		//   *d1;A => [d1, ReverseKeyLookup, ReverseKeyLookupAttr, A]
+		//   *d1;A => [d1, ReverseKeyLookup, A, ReverseKeyLookupAttr]
 		//   stack => [nil, reverse([d1,], A) ] <=
 		// Case 3:
-		//   %d1;A:d2 => [d1, ReverseKeyLookup, ReverseKeyLookupAttr, A, ReverseKeyLookupHint, d2]
+		//   %d1;A:d2 => [d1, ReverseKeyLookup, A, ReverseKeyLookupAttr, d2, ReverseKeyLookupHint]
 		//   stack => [nil, [d1,] ] <= push d1
 		//   stack => [nil, [d1,] ] <= (at ReverseKeyLookup) peeks and sees ReverseKeyLookupAttr so passes
-		//   stack => [nil, [d1,], A] ] <= (at ReverseKeyLookupAttr) peeks and sees ReverseKeyLookupHint so passes
+		//   stack => [nil, [d1,], A, ] <= (at ReverseKeyLookupAttr) peeks and sees ReverseKeyLookupHint so passes
 		//   stack => [nil, reverse([d1,], A, d2) ] <= (at ReverseKeyLookupHint) takes the 2 vales from stack + next value
 
 		case typeKeyReverseLookup:
 			// peek first, if true continue
-			if ptr < e.Top-1 && e.Code[ptr+1].T == typeKeyReverseLookupAttr {
+			if ptr < e.Top-2 && e.Code[ptr+2].T == typeKeyReverseLookupAttr {
 				ptr++
 				continue
 			}
@@ -185,26 +186,31 @@ func (e *Expression) Evaluate(s interface{}) (*[]string, []error) {
 
 		case typeKeyReverseLookupAttr:
 			// peek first, if true continue
-			if ptr < e.Top-1 && e.Code[ptr+1].T == typeKeyReverseLookupHint {
+			if ptr < e.Top-2 && e.Code[ptr+2].T == typeKeyReverseLookupHint {
 				ptr++
 				continue
 			}
-			var attr = e.Code[ptr+1].Value // this will be the attr
-			result, err := store.KeyReverseLookupAttr((*stack[top-1])[0], attr)
+			result, err := store.KeyReverseLookupAttr((*stack[top-2])[0], (*stack[top-1])[0])
 			// store the addr of the result
-			stack[top-1] = result
+			stack[top-2] = result
+			// reset top to nil, that value is no more useful to us
+			stack[top-1] = nil
+			top--
 			// append the errors
 			if err != nil {
 				errs = append(errs, err)
 			}
 
 		case typeKeyReverseLookupHint:
-			var hint = e.Code[ptr+1].Value // this will be the hint
-			result, err := store.KeyReverseLookupHint((*stack[top-1])[0], (*stack[top-2])[0], hint)
+			result, err := store.KeyReverseLookupHint((*stack[top-3])[0], (*stack[top-2])[0], (*stack[top-1])[0])
 			// store the addr of the result
-			stack[top-2] = result
+			stack[top-3] = result
 			// reset top to nil, that value is no more useful to us
+			stack[top-2] = nil
+			// reset top most to nil, that value is no more useful to us
 			stack[top-1] = nil
+			top--
+			top--
 			// append the errors
 			if err != nil {
 				errs = append(errs, err)
