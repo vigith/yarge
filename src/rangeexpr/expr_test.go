@@ -1,9 +1,9 @@
 package rangeexpr
 
 import (
-	"testing"
-
+	"fmt"
 	"rangestore"
+	"testing"
 )
 
 var store, err = rangestore.ConnectTestStore("Test Store") // this can never return error
@@ -330,12 +330,12 @@ func TestParsingComb09(t *testing.T) {
 	}
 }
 
-/* KEYS, etc */
+/* KEYS */
 
-// "%aa1-bb-cc:DD"
+// "%ops-prod-vpc1-range:AUTHORS"
 // upper case key
-func TestParsingMisc01(t *testing.T) {
-	var q = "%aa1-bb-cc:DD"
+func TestParsingKey01(t *testing.T) {
+	var q = "%ops-prod-vpc1-range:AUTHORS"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
@@ -343,11 +343,18 @@ func TestParsingMisc01(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [ Keys, eg (%%foo:KEY)]", q)
 	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"Vigith Maurice"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
 }
 
 // "%aa-bb-cc:key"
 // lower case key
-func TestParsingMisc02(t *testing.T) {
+func TestParsingKey02(t *testing.T) {
 	var q = "%aa-bb-cc:key"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
@@ -358,12 +365,33 @@ func TestParsingMisc02(t *testing.T) {
 	}
 }
 
+// "(*Ops;AUTHORS , *Vigith Maurice;AUTHORS) & (ops-prod-vpc1-range, ops-prod-vpc1-mon)"
+// (%ops-prod-vpc1-range:AUTHORS"
+// upper case key
+func TestParsingKey03(t *testing.T) {
+	var q = "(*Ops;AUTHORS , *Vigith Maurice;AUTHORS) & (ops-prod-vpc1-range, ops-prod-vpc1-mon)"
+	var r = &RangeExpr{Buffer: q}
+	r.Init()
+	r.Expression.Init(q)
+	err := r.Parse()
+	if err != nil {
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [ Keys, eg (%%foo:KEY)]", q)
+	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"ops-prod-vpc1-range", "ops-prod-vpc1-mon"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
+}
+
 // Reverse Lookup
 
-// "*aa"
+// "*range1001.ops.example.com"
 // Reverse Lookup
 func TestRevParsing01(t *testing.T) {
-	var q = "*aa"
+	var q = "*range1001.ops.example.com"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
@@ -371,12 +399,19 @@ func TestRevParsing01(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [basic reverse lookup]", q)
 	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"ops-prod-vpc1-range"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
 }
 
-// "*aa;B"
+// "*Vigith Maurice;AUTHORS"
 // Reverse Lookup with Attr
 func TestRevParsing02(t *testing.T) {
-	var q = "*aa"
+	var q = "*Vigith Maurice;AUTHORS"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
@@ -384,18 +419,33 @@ func TestRevParsing02(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [reverse lookup with attr]", q)
 	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"ops-prod-vpc1-range"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
 }
 
-// "*aa;B:c"
+// "*Ops;AUTHORS:ops-prod-vpc1-mon"
 // Reverse Lookup with Attr and Hint
 func TestRevParsing03(t *testing.T) {
-	var q = "*aa;B:c"
+	var q = "*Ops;AUTHORS:ops-prod-vpc1-mon"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
 	err := r.Parse()
 	if err != nil {
 		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [reverse lookup with attr and hint]", q)
+	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	fmt.Println(result, errs)
+	var expected = []string{"ops-prod-vpc1-mon", "ops-prod-vpc2-mon"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
 	}
 }
 
