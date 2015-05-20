@@ -1,8 +1,6 @@
 package rangeexpr
 
 import (
-	"fmt"
-
 	"rangeops"
 	"rangestore"
 )
@@ -68,10 +66,11 @@ func (e *Expression) Evaluate(s interface{}) (*[]string, []error) {
 	// create a stack to hold pointers to string, and a index
 	// to track the stack. stack pointers will undergo inplace
 	// modifications
-	fmt.Println(e.Code, e.Top)
 	stack, top := make([]*[]string, len(e.Code)), 0 // array of point to array of string
-	// LOGIC:
+	// Rules:
 	// =====
+	// Rule 0: Follow the my basic rules, we will get our AST processed in
+	//         1-pass :-).
 	// Rule 1: As soon as we hit a cluster set operation, take the
 	//         top 2 elements of the stack the replace the top most
 	//         with the set operation result. [Binary Operators]
@@ -126,7 +125,8 @@ func (e *Expression) Evaluate(s interface{}) (*[]string, []error) {
 				ptr++
 				continue
 			}
-			result, err := store.ClusterLookup((*stack[top-1])[0])
+			result, err := store.ClusterLookup(stack[top-1])
+
 			// store the addr of the result
 			stack[top-1] = result
 			// append the errors
@@ -136,7 +136,7 @@ func (e *Expression) Evaluate(s interface{}) (*[]string, []error) {
 
 		case typeKeyLookup:
 			var key = e.Code[ptr+1].Value // this will be the key
-			result, err := store.KeyLookup((*stack[top-1])[0], key)
+			result, err := store.KeyLookup(stack[top-1], key)
 			// store the addr of the result
 			stack[top-1] = result
 			// append the errors
@@ -221,22 +221,21 @@ func (e *Expression) Evaluate(s interface{}) (*[]string, []error) {
 			stack[top-2] = &result
 			// reset top to nil, that value is no more useful to us
 			stack[top-1] = nil
+			top-- // merged two values to 1
 
 		case typeIntersection:
 			var result = make([]string, 0)
 			rangeops.Intersection(stack[top-2], stack[top-1], &result)
 			// store the addr of the result
 			stack[top-2] = &result
-			// reset top to nil, that value is no more useful to us
-			stack[top-1] = nil
+			top-- // merged two values to 1
 
 		case typeDifference:
 			var result = make([]string, 0)
 			rangeops.Difference(stack[top-2], stack[top-1], &result)
 			// store the addr of the result
 			stack[top-2] = &result
-			// reset top to nil, that value is no more useful to us
-			stack[top-1] = nil
+			top-- // merged two values to 1
 
 		} // switch
 
