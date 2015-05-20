@@ -12,93 +12,93 @@ import (
 // Test Range Structure
 /*
 {
-	"data": {
-		"prod": {
-			"vpc1": {
-				"log": {
-				"AUTHORS": [
+  "data": {
+    "prod": {
+      "vpc1": {
+        "log": {
+        "AUTHORS": [
            "data@example.com"
-					],
-					"NODES": [
-						"data1001.data.example.com",
-						"data1002.data.example.com",
+          ],
+          "NODES": [
+            "data1001.data.example.com",
+            "data1002.data.example.com",
             "data1003.data.example.com"
                     ]
-				}
-			},
-			"vpc2": {
-				"log": {
-					"AUTHORS": [
+        }
+      },
+      "vpc2": {
+        "log": {
+          "AUTHORS": [
             "data@example.com"
-					],
-					"NODES": [
-						"data2001.data.example.com",
-						"data2002.data.example.com",
+          ],
+          "NODES": [
+            "data2001.data.example.com",
+            "data2002.data.example.com",
             "data2003.data.example.com"
                     ]
-				}
-			},
-			"vpc3": {
-				"log": {
-					"AUTHORS": [
+        }
+      },
+      "vpc3": {
+        "log": {
+          "AUTHORS": [
             "data@example.com"
-					],
-					"NODES": [
-						"data3001.data.example.com",
-						"data3002.data.example.com",
+          ],
+          "NODES": [
+            "data3001.data.example.com",
+            "data3002.data.example.com",
             "data3003.data.example.com"
                     ]
-				}
-			}
-		},
-		"qa": {
-			"vpc5": {
-				"log": {
-					"AUTHORS": [
+        }
+      }
+    },
+    "qa": {
+      "vpc5": {
+        "log": {
+          "AUTHORS": [
             "qa@example.com"
-					],
-					"NODES": [
-						"data5001.qa.example.com",
+          ],
+          "NODES": [
+            "data5001.qa.example.com",
             "data5002.qa.example.com"
                     ]
-				}
-			}
-		}
-	},
-	"ops": {
-		"prod": {
-			"vpc1": {
-				"mon": {
-					"AUTHORS": [
+        }
+      }
+    }
+  },
+  "ops": {
+    "prod": {
+      "vpc1": {
+        "mon": {
+          "AUTHORS": [
             "Ops"
-					],
-					"NODES": [
+          ],
+          "NODES": [
             "mon1001.ops.example.com"
                     ]
-				},
-				"range": {
-					"AUTHORS": [
+        },
+        "range": {
+          "AUTHORS": [
             "Vigith Maurice"
-					],
-					"NODES": [
-						"range1001.ops.example.com",
-						"range1002.ops.example.com",
+          ],
+          "NODES": [
+            "range1001.ops.example.com",
+            "range1002.ops.example.com",
             "range1003.ops.example.com"
                     ]
-				}
-			},
-			"vpc2": {
-				"mon": {
-					"AUTHORS": [
+        }
+      },
+      "vpc2": {
+        "mon": {
+          "AUTHORS": [
             "Ops"
-					],
-					"NODES": [
+          ],
+          "NODES": [
             "mon2001.ops.example.com"
                     ]
-				}
-			}
-		}
-	}
+        }
+      }
+    }
+  }
 }
 */
 
@@ -251,6 +251,45 @@ func (t *TestStore) KeyLookup(cluster *[]string, key string) (*[]string, error) 
 	rangeops.ArrayToSet(&results)
 
 	return &results, nil
+}
+
+func queryMapRev(key string, attr string, hint string) (*[]string, error) {
+	switch key {
+	case "range1001.ops.sharethis.com", "range1002.ops.sharethis.com", "range1003.ops.sharethis.com":
+		return &[]string{"ops-prod-vpc1-range"}, nil
+	case "mon1001.ops.sharethis.com":
+		return &[]string{"ops-prod-vpc1-mon"}, nil
+	case "mon1002.ops.sharethis.com":
+		return &[]string{"ops-prod-vpc2-mon"}, nil
+
+	case "data1001.data.example.com", "data1002.data.example.com", "data1003.data.example.com":
+		return &[]string{"data-prod-vpc1-log"}, nil
+	case "data2001.data.example.com", "data2002.data.example.com", "data2003.data.example.com":
+		return &[]string{"data-prod-vpc2-log"}, nil
+	case "data3001.data.example.com", "data3002.data.example.com", "data3003.data.example.com":
+		return &[]string{"data-prod-vpc3-log"}, nil
+
+	case "data5001.qa.example.com", "data5002.qa.example.com":
+		return &[]string{"data-qa-vpc5-log"}, nil
+
+	case "Ops":
+		if attr == "AUTHORS" {
+			if hint == "ops-prod-vpc1-mon" || hint == "ops-prod-vpc2-mon" || hint == "" {
+				return &[]string{"ops-prod-vpc1-mon", "ops-prod-vpc2-mon"}, nil
+			}
+			return &[]string{}, errors.New("Did not find any reverse lookup entry")
+		}
+
+	case "Vigith Maurice":
+		if attr == "AUTHORS" {
+			if hint == "ops-prod-vpc1-range1" || hint == "" {
+				return &[]string{"ops-prod-vpc1-range"}, nil
+			}
+			return &[]string{}, errors.New("Did not find any reverse lookup entry")
+		}
+	}
+
+	return &[]string{}, errors.New("Did not find any reverse lookup entry")
 }
 
 // test KeyReverseLookup
