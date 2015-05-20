@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"rangeexpr"
+	"rangestore"
 )
 
 func main() {
@@ -23,5 +24,11 @@ func main() {
 		log.Fatal(err)
 	}
 	r.Execute()
-	fmt.Printf("= %v\n", r.Evaluate())
+
+	var store, err = rangestore.ConnectTestStore("Test Store") // this can never return error
+	if err != nil {
+		fmt.Println("Error in Connecting to Store", err)
+	}
+	res, errs := r.Evaluate(store)
+	fmt.Printf("= %v (errors: %v)\n", res, errs)
 }
