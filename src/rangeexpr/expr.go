@@ -1,3 +1,6 @@
+// AST Processor for Range Expression
+// Author: Vigith Maurice
+
 package rangeexpr
 
 import (
@@ -22,26 +25,34 @@ const (
 	typeKeyReverseLookupHint
 )
 
+// each token will be represented as a bytecode
 type ByteCode struct {
 	T     Type
 	Value string
 }
 
+// each expression once parsed will be represented an array
+// of bytecodes and the number of bytecodes in the array
 type Expression struct {
 	Code []ByteCode
 	Top  int
 }
 
+// create a slice to hold the expression as bytecodes
 func (e *Expression) Init(expression string) {
 	e.Code = make([]ByteCode, len(expression))
 }
 
+// add an operator on to the expression array
 func (e *Expression) addOperator(operator Type) {
 	code, top := e.Code, e.Top
 	e.Top++
 	code[top].T = operator
 }
 
+// add a value on to the expression array
+// TODO: we can remove unwanted stuff in here
+// eg, remove trailing spaces in reverse lookup
 func (e *Expression) addValue(value string) {
 	code, top := e.Code, e.Top
 	e.Top++
@@ -49,7 +60,7 @@ func (e *Expression) addValue(value string) {
 }
 
 // Accepts the interface for connection to store.
-// Returns a pointer to array of strings and error
+// Returns a pointer to array of strings (result) and error
 func (e *Expression) Evaluate(s interface{}) (*[]string, []error) {
 	// simplest case, no ByteCode because expr was an empty string
 	if len(e.Code) == 0 {
@@ -195,6 +206,7 @@ func (e *Expression) Evaluate(s interface{}) (*[]string, []error) {
 			stack[top-2] = result
 			// reset top to nil, that value is no more useful to us
 			stack[top-1] = nil
+			// binary operator, pops of 2 elements to produce a result
 			top--
 			// append the errors
 			if err != nil {
@@ -209,6 +221,7 @@ func (e *Expression) Evaluate(s interface{}) (*[]string, []error) {
 			stack[top-2] = nil
 			// reset top most to nil, that value is no more useful to us
 			stack[top-1] = nil
+			// tertiary operator, pops of 3 elements to produce a result
 			top--
 			top--
 			// append the errors
