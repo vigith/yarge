@@ -26,8 +26,5 @@ Range queries are parsed using [PEG](http://en.wikipedia.org/wiki/Parsing_expres
 
 I would suggest you to read `rangeexpr.peg` to understand all the possbile query combinations.
 
-
-*WIP*, yet to start processing the AST.
-
 ### Author
 [Vigith Maurice](https://github.com/vigith)
