@@ -1,7 +1,13 @@
+// Test all the possible range expressions and query against
+// the teststore. Reason for creating each function for a test
+// case was to ease the debugging process and I wasn't sure whether
+// I wanted to piecemeal the cases.
+// FIXME: Create a map with key as query and value as the expected result
+//        and use this map to test the queries.
+
 package rangeexpr
 
 import (
-	"fmt"
 	"rangestore"
 	"testing"
 )
@@ -442,8 +448,45 @@ func TestRevParsing03(t *testing.T) {
 
 	r.Execute()
 	result, errs := r.Evaluate(store)
-	fmt.Println(result, errs)
 	var expected = []string{"ops-prod-vpc1-mon", "ops-prod-vpc2-mon"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
+}
+
+// "(*Ops;AUTHORS , *Vigith Maurice;AUTHORS) & (ops-prod-vpc1-range, ops-prod-vpc1-mon)"
+func TestRevParsing04(t *testing.T) {
+	var q = "(*Ops;AUTHORS , *Vigith Maurice;AUTHORS) & (ops-prod-vpc1-range, ops-prod-vpc1-mon)"
+	var r = &RangeExpr{Buffer: q}
+	r.Init()
+	r.Expression.Init(q)
+	err := r.Parse()
+	if err != nil {
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [reverse lookup with attr and hint]", q)
+	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"ops-prod-vpc1-mon", "ops-prod-vpc1-range"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
+}
+
+// "*Ops;AUTHORS , (*Vigith Maurice;AUTHORS & ops-prod-vpc1-range) , ops-prod-vpc1-mon"
+func TestRevParsing05(t *testing.T) {
+	var q = "*Ops;AUTHORS , (*Vigith Maurice;AUTHORS & ops-prod-vpc1-range) , ops-prod-vpc1-mon"
+	var r = &RangeExpr{Buffer: q}
+	r.Init()
+	r.Expression.Init(q)
+	err := r.Parse()
+	if err != nil {
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [reverse lookup with attr and hint]", q)
+	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"ops-prod-vpc1-mon", "ops-prod-vpc1-range", "ops-prod-vpc2-mon"}
 	if len(errs) != 0 || !compare(*result, expected) {
 		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
 	}
