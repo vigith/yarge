@@ -41,11 +41,11 @@ attr <- ';' < [A-Z0-9]+ > { p.addValue(buffer[begin:end]); p.addOperator(typeKey
 hint <- ':' value { p.addOperator(typeKeyReverseLookupHint) } 
 
 # start with [:alpha] [:alphanum]? followed with [-a-z0-9] followed by [:alphanum]
-value <- < ( first last middle+ ) / ( first last? ) > { p.addValue(buffer[begin:end]) }
+value <- < ( first last? middle+ ) / ( first last* ) > { p.addValue(buffer[begin:end]) }
 # split value into small blocks
 first <- [a-z]+
 middle <- '-' last 
-last <- [a-z0-9]*
+last <- [a-z0-9]+
 
 brackets <- '(' combinedexpr ')'
 
