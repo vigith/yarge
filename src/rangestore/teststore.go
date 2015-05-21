@@ -115,21 +115,38 @@ func ConnectTestStore(test string) (t *TestStore, err error) {
 func queryMap(cluster string, key string) (*[]string, error) {
 	switch cluster {
 	case "RANGE":
+		if key != "" {
+			return &[]string{""}, errors.New("Not a leaf node")
+		}
 		return &[]string{"ops", "data"}, nil
 
 	case "ops":
+		if key != "" {
+			return &[]string{""}, errors.New("Not a leaf node")
+		}
 		return &[]string{"prod"}, nil
 	case "ops-prod":
+		if key != "" {
+			return &[]string{""}, errors.New("Not a leaf node")
+		}
 		return &[]string{"vpc1", "vpc2"}, nil
 	case "ops-prod-vpc1":
+		if key != "" {
+			return &[]string{""}, errors.New("Not a leaf node")
+		}
 		return &[]string{"range", "mon"}, nil
 	case "ops-prod-vpc2":
+		if key != "" {
+			return &[]string{""}, errors.New("Not a leaf node")
+		}
 		return &[]string{"mon"}, nil
 	case "ops-prod-vpc1-range":
 		if key == "NODES" {
 			return &[]string{"range1001.ops.example.com", "range1002.ops.example.com", "range1003.ops.example.com"}, nil
 		} else if key == "AUTHORS" {
 			return &[]string{"Vigith Maurice"}, nil
+		} else if key == "KEYS" {
+			return &[]string{"NODES", "AUTHORS"}, nil
 		} else {
 			return &[]string{}, nil
 		}
@@ -138,6 +155,8 @@ func queryMap(cluster string, key string) (*[]string, error) {
 			return &[]string{}, errors.New("Cluster Not Found (ops-prod-vpc2-range)")
 		} else if key == "AUTHORS" {
 			return &[]string{}, errors.New("Cluster Not Found (ops-prod-vpc2-range)")
+		} else if key == "KEYS" {
+			return &[]string{"NODES", "AUTHORS"}, nil
 		} else {
 			return &[]string{}, nil
 		}
@@ -146,6 +165,8 @@ func queryMap(cluster string, key string) (*[]string, error) {
 			return &[]string{"mon1001.ops.example.com"}, nil
 		} else if key == "AUTHORS" {
 			return &[]string{"Ops"}, nil
+		} else if key == "KEYS" {
+			return &[]string{"NODES", "AUTHORS"}, nil
 		} else {
 			return &[]string{}, nil
 		}
@@ -154,25 +175,47 @@ func queryMap(cluster string, key string) (*[]string, error) {
 			return &[]string{"mon2001.ops.example.com"}, nil
 		} else if key == "AUTHORS" {
 			return &[]string{"Ops"}, nil
+		} else if key == "KEYS" {
+			return &[]string{"NODES", "AUTHORS"}, nil
 		} else {
 			return &[]string{}, nil
 		}
 
 	case "data":
+		if key != "" {
+			return &[]string{""}, errors.New("Not a leaf node")
+		}
 		return &[]string{"prod", "qa"}, nil
 	case "data-prod":
+		if key != "" {
+			return &[]string{""}, errors.New("Not a leaf node")
+		}
 		return &[]string{"vpc1", "vpc2", "vpc3"}, nil
 	case "data-prod-vpc1":
+		if key != "" {
+			return &[]string{""}, errors.New("Not a leaf node")
+		}
 		return &[]string{"log"}, nil
 	case "data-prod-vpc2":
+		if key != "" {
+			return &[]string{""}, errors.New("Not a leaf node")
+		}
 		return &[]string{"log"}, nil
 	case "data-prod-vpc3":
+		if key != "" {
+			return &[]string{""}, errors.New("Not a leaf node")
+		}
 		return &[]string{"log"}, nil
 	case "data-prod-vpc1-log":
+		if key != "" {
+			return &[]string{""}, errors.New("Not a leaf node")
+		}
 		if key == "NODES" {
 			return &[]string{"data1001.data.example.com", "data1002.data.example.com", "data1003.data.example.com"}, nil
 		} else if key == "AUTHORS" {
 			return &[]string{"data@example.com"}, nil
+		} else if key == "KEYS" {
+			return &[]string{"NODES", "AUTHORS"}, nil
 		} else {
 			return &[]string{}, nil
 		}
@@ -181,6 +224,8 @@ func queryMap(cluster string, key string) (*[]string, error) {
 			return &[]string{"data2001.data.example.com", "data2002.data.example.com", "data2003.data.example.com"}, nil
 		} else if key == "AUTHORS" {
 			return &[]string{"data@example.com"}, nil
+		} else if key == "KEYS" {
+			return &[]string{"NODES", "AUTHORS"}, nil
 		} else {
 			return &[]string{}, nil
 		}
@@ -190,19 +235,29 @@ func queryMap(cluster string, key string) (*[]string, error) {
 			return &[]string{"data3001.data.example.com", "data3002.data.example.com", "data3003.data.example.com"}, nil
 		} else if key == "AUTHORS" {
 			return &[]string{"data@example.com"}, nil
+		} else if key == "KEYS" {
+			return &[]string{"NODES", "AUTHORS"}, nil
 		} else {
 			return &[]string{}, nil
 		}
 
 	case "data-qa":
+		if key != "" {
+			return &[]string{""}, errors.New("Not a leaf node")
+		}
 		return &[]string{"vpc5"}, nil
 	case "data-qa-vpc5":
+		if key != "" {
+			return &[]string{""}, errors.New("Not a leaf node")
+		}
 		return &[]string{"log"}, nil
 	case "data-qa-vpc5-log":
 		if key == "NODES" {
 			return &[]string{"data5001.qa.example.com", "data5002.qa.example.com"}, nil
 		} else if key == "AUTHORS" {
 			return &[]string{"qa@example.com"}, nil
+		} else if key == "KEYS" {
+			return &[]string{"NODES", "AUTHORS"}, nil
 		} else {
 			return &[]string{}, nil
 		}
@@ -222,7 +277,7 @@ func (t *TestStore) ClusterLookup(cluster *[]string) (*[]string, error) {
 	for _, elem := range *cluster {
 		result, err := queryMap(elem, "")
 		if err != nil {
-			return &[]string{}, errors.New("Mock Map Failed!!")
+			return &[]string{}, err
 		}
 		results = append(results, *result...)
 	}
@@ -241,7 +296,7 @@ func (t *TestStore) KeyLookup(cluster *[]string, key string) (*[]string, error) 
 	for _, elem := range *cluster {
 		result, err := queryMap(elem, key)
 		if err != nil {
-			return &[]string{}, errors.New("Mock Map Failed!!")
+			return &[]string{}, err
 		}
 		results = append(results, *result...)
 	}
@@ -298,7 +353,7 @@ func (t *TestStore) KeyReverseLookup(key string) (*[]string, error) {
 
 	result, err := queryMapRev(key, "", "")
 	if err != nil {
-		return &[]string{}, errors.New("Mock Reverse Map Failed!!")
+		return &[]string{}, err
 	}
 
 	return result, nil
@@ -312,7 +367,7 @@ func (t *TestStore) KeyReverseLookupAttr(key string, attr string) (*[]string, er
 
 	result, err := queryMapRev(key, attr, "")
 	if err != nil {
-		return &[]string{}, errors.New("Mock Reverse Map Failed!!")
+		return &[]string{}, err
 	}
 
 	return result, nil
@@ -326,7 +381,7 @@ func (t *TestStore) KeyReverseLookupHint(key string, attr string, hint string) (
 
 	result, err := queryMapRev(key, attr, hint)
 	if err != nil {
-		return &[]string{}, errors.New("Mock Reverse Map Failed!!")
+		return &[]string{}, err
 	}
 
 	return result, nil
