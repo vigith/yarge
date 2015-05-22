@@ -5,7 +5,6 @@ package rangestore
 
 import (
 	"errors"
-	"rangeops"
 )
 
 // Test Range Structure
@@ -124,22 +123,22 @@ func queryMap(cluster string, key string) (*[]string, error) {
 		if key != "" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
-		return &[]string{"prod"}, nil
+		return &[]string{"ops-prod"}, nil
 	case "ops-prod":
 		if key != "" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
-		return &[]string{"vpc1", "vpc2"}, nil
+		return &[]string{"ops-prod-vpc1", "ops-prod-vpc2"}, nil
 	case "ops-prod-vpc1":
 		if key != "" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
-		return &[]string{"range", "mon"}, nil
+		return &[]string{"ops-prod-vpc1-range", "ops-prod-vpc1-mon"}, nil
 	case "ops-prod-vpc2":
 		if key != "" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
-		return &[]string{"mon"}, nil
+		return &[]string{"ops-prod-vpc2-mon"}, nil
 	case "ops-prod-vpc1-range":
 		if key == "NODES" {
 			return &[]string{"range1001.ops.example.com", "range1002.ops.example.com", "range1003.ops.example.com"}, nil
@@ -185,27 +184,27 @@ func queryMap(cluster string, key string) (*[]string, error) {
 		if key != "" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
-		return &[]string{"prod", "qa"}, nil
+		return &[]string{"data-prod", "data-qa"}, nil
 	case "data-prod":
 		if key != "" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
-		return &[]string{"vpc1", "vpc2", "vpc3"}, nil
+		return &[]string{"data-prod-vpc1", "data-prod-vpc2", "data-prod-vpc3"}, nil
 	case "data-prod-vpc1":
 		if key != "" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
-		return &[]string{"log"}, nil
+		return &[]string{"data-prod-vpc1-log"}, nil
 	case "data-prod-vpc2":
 		if key != "" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
-		return &[]string{"log"}, nil
+		return &[]string{"data-prod-vpc2-log"}, nil
 	case "data-prod-vpc3":
 		if key != "" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
-		return &[]string{"log"}, nil
+		return &[]string{"data-prod-vpc3-log"}, nil
 	case "data-prod-vpc1-log":
 		if key != "" {
 			return &[]string{""}, errors.New("Not a leaf node")
@@ -245,12 +244,12 @@ func queryMap(cluster string, key string) (*[]string, error) {
 		if key != "" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
-		return &[]string{"vpc5"}, nil
+		return &[]string{"data-qa-vpc5"}, nil
 	case "data-qa-vpc5":
 		if key != "" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
-		return &[]string{"log"}, nil
+		return &[]string{"data-qa-vpc5-log"}, nil
 	case "data-qa-vpc5-log":
 		if key == "NODES" {
 			return &[]string{"data5001.qa.example.com", "data5002.qa.example.com"}, nil
@@ -258,6 +257,8 @@ func queryMap(cluster string, key string) (*[]string, error) {
 			return &[]string{"qa@example.com"}, nil
 		} else if key == "KEYS" {
 			return &[]string{"NODES", "AUTHORS"}, nil
+		} else if key == "QAFOR" {
+			return &[]string{"data"}, nil
 		} else {
 			return &[]string{}, nil
 		}
@@ -269,7 +270,7 @@ func queryMap(cluster string, key string) (*[]string, error) {
 // test clusterlookup
 func (t *TestStore) ClusterLookup(cluster *[]string) (*[]string, error) {
 
-	if (*cluster)[0] == "error" {
+	if len(*cluster) > 0 && (*cluster)[0] == "error" {
 		return &[]string{}, errors.New("I am asked to return 'error'")
 	}
 
@@ -281,14 +282,12 @@ func (t *TestStore) ClusterLookup(cluster *[]string) (*[]string, error) {
 		}
 		results = append(results, *result...)
 	}
-
-	rangeops.ArrayToSet(&results)
 	return &results, nil
 }
 
 // test KeyLookup
 func (t *TestStore) KeyLookup(cluster *[]string, key string) (*[]string, error) {
-	if (*cluster)[0] == "error" {
+	if len(*cluster) > 0 && (*cluster)[0] == "error" {
 		return &[]string{}, errors.New("I am asked to return 'error'")
 	}
 
@@ -300,8 +299,6 @@ func (t *TestStore) KeyLookup(cluster *[]string, key string) (*[]string, error) 
 		}
 		results = append(results, *result...)
 	}
-
-	rangeops.ArrayToSet(&results)
 
 	return &results, nil
 }

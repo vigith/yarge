@@ -71,9 +71,9 @@ func TestParsing03(t *testing.T) {
 	}
 	r.Execute()
 	result, errs := r.Evaluate(store)
-	var expected = []string{"prod"}
+	var expected = []string{"ops-prod"}
 	if len(errs) != 0 || !compare(*result, expected) {
-		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", expected, *result)
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
 	}
 }
 
@@ -162,7 +162,7 @@ func TestParsing09(t *testing.T) {
 
 	r.Execute()
 	result, errs := r.Evaluate(store)
-	var expected = []string{"prod", "qa"}
+	var expected = []string{"ops-prod", "data-prod", "data-qa"}
 	if len(errs) != 0 || !compare(*result, expected) {
 		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
 	}
@@ -199,7 +199,7 @@ func TestParsingComb02(t *testing.T) {
 // "%a-b&%d"
 // valid intersection operator query
 func TestParsingComb03(t *testing.T) {
-	var q = "%ops-prod & %data-prod"
+	var q = "(%ops-prod & %data-prod), test"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
@@ -210,7 +210,7 @@ func TestParsingComb03(t *testing.T) {
 
 	r.Execute()
 	result, errs := r.Evaluate(store)
-	var expected = []string{"vpc1", "vpc2"}
+	var expected = []string{"test"}
 	if len(errs) != 0 || !compare(*result, expected) {
 		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
 	}
@@ -230,7 +230,7 @@ func TestParsingComb04(t *testing.T) {
 
 	r.Execute()
 	result, errs := r.Evaluate(store)
-	var expected = []string{}
+	var expected = []string{"ops-prod"}
 	if len(errs) != 0 || !compare(*result, expected) {
 		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
 	}
@@ -250,7 +250,7 @@ func TestParsingComb05(t *testing.T) {
 
 	r.Execute()
 	result, errs := r.Evaluate(store)
-	var expected = []string{"vpc2", "vpc3"}
+	var expected = []string{"data-prod-vpc1", "data-prod-vpc2", "data-prod-vpc3"}
 	if len(errs) != 0 || !compare(*result, expected) {
 		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
 	}
@@ -259,7 +259,7 @@ func TestParsingComb05(t *testing.T) {
 // "(%date-prod ^ %ops-prod) ^ vpc2"
 // difference with grouping together
 func TestParsingComb06(t *testing.T) {
-	var q = "(%data-prod ^ %ops-prod) ^ vpc2"
+	var q = "(%data-prod ^ %ops-prod) ^ data-prod-vpc2"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
@@ -270,7 +270,7 @@ func TestParsingComb06(t *testing.T) {
 
 	r.Execute()
 	result, errs := r.Evaluate(store)
-	var expected = []string{"vpc3"}
+	var expected = []string{"data-prod-vpc1", "data-prod-vpc3"}
 	if len(errs) != 0 || !compare(*result, expected) {
 		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
 	}
@@ -279,7 +279,7 @@ func TestParsingComb06(t *testing.T) {
 // "%ops-prod, (%data-prod ^ vpc2)"
 // union and difference together
 func TestParsingComb07(t *testing.T) {
-	var q = "%ops-prod, (%data-prod ^ vpc2)"
+	var q = "%ops-prod, (%data-prod ^ data-prod-vpc2)"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
@@ -290,7 +290,7 @@ func TestParsingComb07(t *testing.T) {
 
 	r.Execute()
 	result, errs := r.Evaluate(store)
-	var expected = []string{"vpc2", "vpc3", "vpc1"}
+	var expected = []string{"ops-prod-vpc1", "ops-prod-vpc2", "data-prod-vpc1", "data-prod-vpc3"}
 	if len(errs) != 0 || !compare(*result, expected) {
 		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
 	}
@@ -299,7 +299,7 @@ func TestParsingComb07(t *testing.T) {
 // "(%ops-prod & vpc2) , %data-prod ^ vpc2"
 // union, difference and intersection together
 func TestParsingComb08(t *testing.T) {
-	var q = "(%ops-prod & vpc2) , %data-prod ^ vpc2"
+	var q = "(%ops-prod & vpc2) , %data-prod ^ %data-qa"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
@@ -310,7 +310,7 @@ func TestParsingComb08(t *testing.T) {
 
 	r.Execute()
 	result, errs := r.Evaluate(store)
-	var expected = []string{"vpc2", "vpc3", "vpc1"}
+	var expected = []string{"data-prod-vpc1", "data-prod-vpc2", "data-prod-vpc3"}
 	if len(errs) != 0 || !compare(*result, expected) {
 		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
 	}
@@ -319,7 +319,7 @@ func TestParsingComb08(t *testing.T) {
 // "%ops-prod & (vpc2 , %data-prod) ^ vpc2"
 // union, difference and intersection together
 func TestParsingComb09(t *testing.T) {
-	var q = "%ops-prod & (vpc2 , %data-prod) ^ vpc2"
+	var q = "%ops-prod & (ops-prod-vpc2 , %data-prod) ^ %data-qa"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
@@ -330,7 +330,27 @@ func TestParsingComb09(t *testing.T) {
 
 	r.Execute()
 	result, errs := r.Evaluate(store)
-	var expected = []string{"vpc1"}
+	var expected = []string{"ops-prod-vpc2"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
+}
+
+// "%%data-qa-vpc5-log:QAFOR"
+// union, difference and intersection together
+func TestParsingComb10(t *testing.T) {
+	var q = "%%data-qa-vpc5-log:QAFOR & %data"
+	var r = &RangeExpr{Buffer: q}
+	r.Init()
+	r.Expression.Init(q)
+	err := r.Parse()
+	if err != nil {
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (union, difference), eg (%%foo^%%bar),%%cow]", q)
+	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"data-prod", "data-qa"}
 	if len(errs) != 0 || !compare(*result, expected) {
 		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
 	}
