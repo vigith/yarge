@@ -488,8 +488,8 @@ func (p *RangeExpr) Execute() {
 		case ruleAction4:
 			p.addOperator(typeClusterLookup)
 		case ruleAction5:
-			p.addOperator(typeKeyLookup)
 			p.addValue(buffer[begin:end])
+			p.addOperator(typeKeyLookup)
 		case ruleAction6:
 			p.addValue(buffer[begin:end])
 			p.addOperator(typeKeyReverseLookup)
@@ -1341,7 +1341,7 @@ func (p *RangeExpr) Init() {
 		nil,
 		/* 24 Action4 <- <{ p.addOperator(typeClusterLookup) }> */
 		nil,
-		/* 25 Action5 <- <{ p.addOperator(typeKeyLookup); p.addValue(buffer[begin:end]); }> */
+		/* 25 Action5 <- <{ p.addValue(buffer[begin:end]); p.addOperator(typeKeyLookup); }> */
 		nil,
 		/* 26 Action6 <- <{ p.addValue(buffer[begin:end]); p.addOperator(typeKeyReverseLookup); }> */
 		nil,

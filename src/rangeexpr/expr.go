@@ -132,12 +132,11 @@ func (e *Expression) Evaluate(s interface{}) (*[]string, []error) {
 
 		case typeClusterLookup:
 			// peek first, if true continue
-			if ptr < e.Top-1 && e.Code[ptr+1].T == typeKeyLookup {
+			if ptr < e.Top-2 && e.Code[ptr+2].T == typeKeyLookup {
 				ptr++
 				continue
 			}
 			result, err := store.ClusterLookup(stack[top-1])
-
 			// store the addr of the result
 			stack[top-1] = result
 			// append the errors
@@ -146,15 +145,17 @@ func (e *Expression) Evaluate(s interface{}) (*[]string, []error) {
 			}
 
 		case typeKeyLookup:
-			var key = e.Code[ptr+1].Value // this will be the key
-			result, err := store.KeyLookup(stack[top-1], key)
+			result, err := store.KeyLookup(stack[top-2], (*stack[top-1])[0])
 			// store the addr of the result
-			stack[top-1] = result
+			stack[top-2] = result
+			// reset top to nil, that value is no more useful to us
+			stack[top-1] = nil
+			// binary operator, pops of 2 elements to produce a result
+			top--
 			// append the errors
 			if err != nil {
 				errs = append(errs, err)
 			}
-			ptr++
 
 		// Reverse Lookup
 		// --------------

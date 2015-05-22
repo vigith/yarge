@@ -32,7 +32,7 @@ difference <- '^' rexpr cexpr? { p.addOperator(typeDifference) }
 
 cluster <- ('%' < 'RANGE' > { p.addValue(buffer[begin:end]); } / '%' rexpr) { p.addOperator(typeClusterLookup) } key?
 
-key <- ':' < [A-Z0-9]+ > { p.addOperator(typeKeyLookup); p.addValue(buffer[begin:end]); }
+key <- ':' < [A-Z0-9]+ > { p.addValue(buffer[begin:end]); p.addOperator(typeKeyLookup); }
 
 rlookup <- '*' < [[a-z0-9 .]]+ > { p.addValue(buffer[begin:end]); p.addOperator(typeKeyReverseLookup); } attr? cexpr?
 
