@@ -5,3 +5,7 @@ NODES:
   - data5001.qa.example.com
   - data5002.qa.example.com
   - data5003.qa.example.com
+
+
+QAFOR:
+  - data

@@ -55,6 +55,9 @@ import (
           "AUTHORS": [
             "qa@example.com"
           ],
+        "QAFOR": [
+            "data"
+          ],
           "NODES": [
             "data5001.qa.example.com",
             "data5002.qa.example.com"
