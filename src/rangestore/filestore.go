@@ -12,20 +12,23 @@ package rangestore
 import (
 	"errors"
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
 var _config = "cluster.yaml"
 
 type FileStore struct {
-	StorePath string
-	MaxDepth  int
+	StorePath  string // directory where yamls are stored
+	MaxDepth   int    // TODO: we could use this for reverse lookup to limit nested look down
+	FastLookup bool   // fast return, will return the first match
 }
 
 // check whether the StorePath Exists, etc
-func ConnectFileStore(dir string, depth int) (f *FileStore, err error) {
+func ConnectFileStore(dir string, depth int, fast bool) (f *FileStore, err error) {
 	// removing trailing path seperator
 	if os.IsPathSeparator(dir[len(dir)-1]) {
 		dir = dir[:len(dir)-1]
@@ -40,7 +43,7 @@ func ConnectFileStore(dir string, depth int) (f *FileStore, err error) {
 	if !fi.IsDir() {
 		return nil, errors.New(fmt.Sprintf("Path [%s] is not a directory", dir))
 	}
-	f = &FileStore{StorePath: dir, MaxDepth: depth}
+	f = &FileStore{StorePath: dir, MaxDepth: depth, FastLookup: fast}
 	return f, nil
 }
 
@@ -115,16 +118,54 @@ func (f *FileStore) KeyLookup(cluster *[]string, key string) (*[]string, error) 
 // LOOKUP REVERSE //
 ////////////////////
 
+// same as KeyReverseLookupAttr where attr == NODES
 func (f *FileStore) KeyReverseLookup(key string) (*[]string, error) {
-	return &[]string{}, errors.New("KeyReverseLookup Failed, returning empty")
+	return f.KeyReverseLookupAttr(key, "NODES")
 }
 
+// same as KeyReverseLookupAttr where attr == NODES and hint == ""
 func (f *FileStore) KeyReverseLookupAttr(key string, attr string) (*[]string, error) {
-	return &[]string{}, errors.New("KeyReverseLookupAttr Failed, returning empty")
+	return f.KeyReverseLookupHint(key, attr, "")
 }
 
+// given a key, it will serach for the cluster where the attr has that key
+// hint is to limit the scope of search
 func (f *FileStore) KeyReverseLookupHint(key string, attr string, hint string) (*[]string, error) {
-	return &[]string{}, errors.New("KeyReverseLookupHint Failed, returning empty")
+	var clusters *[]string
+	var err error
+	var results = make([]string, 0)
+	var seen bool
+
+	clusters, err = f.getAllLeafNodes(hint)
+	if err != nil {
+		return &results, nil
+	}
+
+	for _, elem := range *clusters {
+		// get the cluster config
+		content, err := f.readClusterConfig(elem)
+		if err != nil {
+			return &[]string{}, errors.New(fmt.Sprintf("KeyLookup for [%s] Failed (Error: %s)", elem, err))
+		}
+		// look whether the attr exists
+		result, err := yamlKeyLookup(content, attr)
+		if err != nil {
+			continue // looks like we didn't find the key
+		} else {
+			for _, i := range *result {
+				if i == key {
+					results = append(results, elem)
+					seen = true
+					break
+				}
+			}
+			if seen && f.FastLookup {
+				return &results, nil
+			}
+		}
+	}
+
+	return &results, nil
 }
 
 ////////////////////////
@@ -196,4 +237,92 @@ func (f *FileStore) readClusterConfig(cluster string) (content []byte, err error
 	}
 
 	return content, nil
+}
+
+// Get all the leaf cluster nodes for a given dir
+// NOTE: This code is not efficient as "path/filepath" Walk() function
+// is not efficient since it does the walk in lexical order
+func (f *FileStore) getAllLeafNodes(root string) (*[]string, error) {
+	var leafs = make([]string, 0)
+	var err error
+	// if root is given, append to localize the lookup
+	root = f.clusterToPath(root)
+	// do a Clean to remove weirdness in path
+	trimPath := fmt.Sprintf("%s/", filepath.Clean(f.StorePath))
+	// do the walk
+	err = filepath.Walk(
+		root,
+		// append only the name matches _config
+		func(path string, fi os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if fi.Name() == _config {
+				leafs = append(leafs, strings.Replace(strings.TrimPrefix(filepath.Dir(path), trimPath), "/", "-", -1))
+			}
+			return nil
+		},
+	)
+
+	if err != nil {
+		return &[]string{}, errors.New(fmt.Sprintf("filepath.Walk Failed for ROOT dir [%s]", root))
+	}
+
+	return &leafs, nil
+}
+
+// We expect the YAML data to be in key value, where value is
+// an array. Incase value is not an array, we will still return
+// as an array
+func yamlKeyLookup(content []byte, key string) (*[]string, error) {
+	var u map[string]interface{}
+	var err error
+	err = yaml.Unmarshal(content, &u)
+	// if unmarshal fails, return early with error
+	if err != nil {
+		return &[]string{}, err
+	}
+
+	// handle KEYS seperately
+	// returns all the KEYS of a cluster
+	if key == "KEYS" {
+		var results = make([]string, 0)
+		for k := range u {
+			results = append(results, k)
+		}
+		return &results, nil
+	}
+
+	// check whether the map has the key we are looking for
+	value, ok := u[key]
+	if !ok {
+		return &[]string{}, errors.New(fmt.Sprintf("Cannot find Key [%s]", key))
+	}
+
+	// try to return result pointer to an array of strings
+	switch value.(type) {
+	// if it is an array
+	case []interface{}:
+		var results = make([]string, 0)
+		for _, elem := range value.([]interface{}) {
+			switch elem.(type) {
+			case string:
+				results = append(results, elem.(string))
+			case int:
+				results = append(results, fmt.Sprintf("%d", elem.(int)))
+			case bool:
+				results = append(results, fmt.Sprintf("%t", elem.(bool)))
+			}
+		}
+		return &results, nil
+		// if not an array, make it an array
+	case string:
+		return &[]string{value.(string)}, nil
+	case int:
+		return &[]string{fmt.Sprintf("%d", value.(int))}, nil
+	case bool:
+		return &[]string{fmt.Sprintf("%t", value.(bool))}, nil
+	}
+
+	return &[]string{}, nil
 }
