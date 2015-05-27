@@ -117,28 +117,28 @@ func ConnectTestStore(test string) (t *TestStore, err error) {
 func queryMap(cluster string, key string) (*[]string, error) {
 	switch cluster {
 	case "RANGE":
-		if key != "" {
+		if key != "" && key != "NODES" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
 		return &[]string{"ops", "data"}, nil
 
 	case "ops":
-		if key != "" {
+		if key != "" && key != "NODES" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
 		return &[]string{"ops-prod"}, nil
 	case "ops-prod":
-		if key != "" {
+		if key != "" && key != "NODES" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
 		return &[]string{"ops-prod-vpc1", "ops-prod-vpc2"}, nil
 	case "ops-prod-vpc1":
-		if key != "" {
+		if key != "" && key != "NODES" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
 		return &[]string{"ops-prod-vpc1-range", "ops-prod-vpc1-mon"}, nil
 	case "ops-prod-vpc2":
-		if key != "" {
+		if key != "" && key != "NODES" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
 		return &[]string{"ops-prod-vpc2-mon"}, nil
@@ -184,35 +184,35 @@ func queryMap(cluster string, key string) (*[]string, error) {
 		}
 
 	case "data":
-		if key != "" {
+		if key != "" && key != "NODES" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
 		return &[]string{"data-prod", "data-qa"}, nil
 	case "data-prod":
-		if key != "" {
+		if key != "" && key != "NODES" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
 		return &[]string{"data-prod-vpc1", "data-prod-vpc2", "data-prod-vpc3"}, nil
 	case "data-prod-vpc1":
-		if key != "" {
+		if key != "" && key != "NODES" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
 		return &[]string{"data-prod-vpc1-log"}, nil
 	case "data-prod-vpc2":
-		if key != "" {
+		if key != "" && key != "NODES" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
 		return &[]string{"data-prod-vpc2-log"}, nil
 	case "data-prod-vpc3":
-		if key != "" {
+		if key != "" && key != "NODES" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
 		return &[]string{"data-prod-vpc3-log"}, nil
 	case "data-prod-vpc1-log":
-		if key != "" {
+		if key != "" && key != "NODES" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
-		if key == "NODES" {
+		if key == "NODES" && key != "NODES" {
 			return &[]string{"data1001.data.example.com", "data1002.data.example.com", "data1003.data.example.com"}, nil
 		} else if key == "AUTHORS" {
 			return &[]string{"data@example.com"}, nil
@@ -244,12 +244,12 @@ func queryMap(cluster string, key string) (*[]string, error) {
 		}
 
 	case "data-qa":
-		if key != "" {
+		if key != "" && key != "NODES" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
 		return &[]string{"data-qa-vpc5"}, nil
 	case "data-qa-vpc5":
-		if key != "" {
+		if key != "" && key != "NODES" {
 			return &[]string{""}, errors.New("Not a leaf node")
 		}
 		return &[]string{"data-qa-vpc5-log"}, nil
@@ -279,7 +279,7 @@ func (t *TestStore) ClusterLookup(cluster *[]string) (*[]string, error) {
 
 	var results = make([]string, 0)
 	for _, elem := range *cluster {
-		result, err := queryMap(elem, "")
+		result, err := queryMap(elem, "NODES")
 		if err != nil {
 			return &[]string{}, err
 		}

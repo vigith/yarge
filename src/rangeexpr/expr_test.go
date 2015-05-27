@@ -144,7 +144,7 @@ func TestParsing08(t *testing.T) {
 	result, errs := r.Evaluate(store)
 	var expected = []string{"ops", "data"}
 	if len(errs) != 0 || !compare(*result, expected) {
-		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", expected, *result)
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
 	}
 }
 
