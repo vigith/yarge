@@ -9,13 +9,14 @@ import (
 var f *FileStore
 var dir = "./t"
 var depth = 3
+var fast = false
 
 // This is for setup and tear down.
 // the Only setup we require is to make sure
 // the store dir exists
 func TestMain(m *testing.M) {
 	var err error
-	f, err = ConnectFileStore(dir, depth)
+	f, err = ConnectFileStore(dir, depth, fast)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -23,6 +24,106 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+// KeyReverseLookup (major testing is done in TestKeyReverseLookupHint)
+func TestKeyReverseLookup(t *testing.T) {
+	key := "range1001.ops.example.com"
+	results, err := f.KeyReverseLookup(key)
+	expected := []string{"ops-prod-vpc1-range"}
+	if err != nil || !compare(*results, expected) {
+		t.Errorf("Expected NO ERROR, (Key: %s) Expected: %s, Got: %s (Error: %s)", key, expected, *results, err)
+	}
+}
+
+// KeyReverseLookupAttr (major testing is done in TestKeyReverseLookupHint)
+func TestKeyReverseLookupAttr(t *testing.T) {
+	key := "data@example.com"
+	attr := "AUTHORS"
+	results, err := f.KeyReverseLookupAttr(key, attr)
+	expected := []string{"data-prod-vpc1-log", "data-prod-vpc2-log", "data-prod-vpc3-log"}
+	if err != nil || !compare(*results, expected) {
+		t.Errorf("Expected NO ERROR, (Key: %s) Expected: %s, Got: %s (Error: %s)", key, expected, *results, err)
+	}
+}
+
+// KeyReverseLookupHint
+func TestKeyReverseLookupHint(t *testing.T) {
+	var err error
+	var results *[]string
+	var expected []string
+	var key, attr, hint string
+
+	key = "Ops"
+	attr = "AUTHORS"
+	hint = ""
+	results, err = f.KeyReverseLookupHint(key, attr, hint)
+	expected = []string{"ops-prod-vpc1-mon", "ops-prod-vpc2-mon"}
+	if err != nil || !compare(*results, expected) {
+		t.Errorf("Expected NO ERROR, (Key: %s, Attr: %s, Hint: %s) Expected: %s, Got: %s (Error: %s)", key, attr, hint, expected, *results, err)
+	}
+
+	key = "Ops"
+	attr = "AUTHORS"
+	hint = ""
+	// enable FastLookup
+	f.FastLookup = true
+	results, err = f.KeyReverseLookupHint(key, attr, hint)
+	expected = []string{"ops-prod-vpc1-mon"}
+	if err != nil || !compare(*results, expected) {
+		t.Errorf("Expected NO ERROR, (Key: %s, Attr: %s, Hint: %s, FastLookup: %t) Expected: %s, Got: %s (Error: %s)", key, attr, hint, f.FastLookup, expected, *results, err)
+	}
+	// toggle FastLookup back
+	f.FastLookup = false
+
+	// look for Ops in data, should return empty
+	key = "Ops"
+	attr = "AUTHORS"
+	hint = "data"
+	results, err = f.KeyReverseLookupHint(key, attr, hint)
+	expected = []string{}
+	if err != nil || !compare(*results, expected) {
+		t.Errorf("Expected NO ERROR, (Key: %s, Attr: %s, Hint: %s, FastLookup: %t) Expected: %s, Got: %s (Error: %s)", key, attr, hint, f.FastLookup, expected, *results, err)
+	}
+
+	key = "data@example.com"
+	attr = "AUTHORS"
+	hint = "data-prod"
+	results, err = f.KeyReverseLookupHint(key, attr, hint)
+	expected = []string{"data-prod-vpc1-log", "data-prod-vpc2-log", "data-prod-vpc3-log"}
+	if err != nil || !compare(*results, expected) {
+		t.Errorf("Expected NO ERROR, (Key: %s, Attr: %s, Hint: %s, FastLookup: %t) Expected: %s, Got: %s (Error: %s)", key, attr, hint, f.FastLookup, expected, *results, err)
+	}
+}
+
+// getAllLeafNodes
+func TestGetAllLeafNodes(t *testing.T) {
+	var err error
+	var results *[]string
+	var expected []string
+	var root string
+
+	root = ""
+	results, err = f.getAllLeafNodes(root)
+	expected = []string{"data-prod-vpc1-log", "data-prod-vpc2-log", "data-prod-vpc3-log", "data-qa-vpc5-log", "ops-prod-vpc1-mon", "ops-prod-vpc1-range", "ops-prod-vpc2-mon"}
+	if err != nil || !compare(*results, expected) {
+		t.Errorf("Expected NO ERROR, Root: %s Expected: %s, Got: %s (Error: %s)", root, expected, *results, err)
+	}
+
+	root = "ops"
+	results, err = f.getAllLeafNodes(root)
+	expected = []string{"ops-prod-vpc1-mon", "ops-prod-vpc1-range", "ops-prod-vpc2-mon"}
+	if err != nil || !compare(*results, expected) {
+		t.Errorf("Expected NO ERROR, Root: %s Expected: %s, Got: %s (Error: %s)", root, expected, *results, err)
+	}
+
+	root = "data-qa-vpc5-log"
+	results, err = f.getAllLeafNodes(root)
+	expected = []string{"data-qa-vpc5-log"}
+	if err != nil || !compare(*results, expected) {
+		t.Errorf("Expected NO ERROR, Root: %s Expected: %s, Got: %s (Error: %s)", root, expected, *results, err)
+	}
+}
+
+// key lookup
 func TestKeyLookup(t *testing.T) {
 	var cluster []string
 	var err error
