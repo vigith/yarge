@@ -514,8 +514,7 @@ func TestRevParsing05(t *testing.T) {
 
 // Internal Function
 
-// Compare 2 Arrays, items need not be in correct
-// order
+// Compare 2 Arrays, items need not be in correct order
 func compare(arr1, arr2 []string) bool {
 	if len(arr1) != len(arr2) {
 		return false

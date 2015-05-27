@@ -111,7 +111,7 @@ func (e *Expression) Evaluate(s interface{}) (*[]string, []error) {
 
 		// Cluster Lookup
 		// --------------
-		// if type == ClusterLookup, peek 1 ahead to check whether
+		// if type == ClusterLookup, peek 2 ahead to check whether
 		// it is a KeyLookup, if yes continue and let KeyLookup take care
 		// of expanding, else expand in place
 		// if type == KeyLookup, take the next elem from the stack and
@@ -125,9 +125,10 @@ func (e *Expression) Evaluate(s interface{}) (*[]string, []error) {
 		//   d2 => [d2]
 		//   stack => [nil, [d2,] ] <= push d2
 		// Case 3:
-		//   %d1:D2 => [d1, ClusterLookup, KeyLookup, D2]
+		//   %d1:D2 => [d1, ClusterLookup, D2, KeyLookup]
 		//   stack => [nil, [d1,] ] <= push d1
-		//   stack => [nil, [d1,] ] <= (at ClusterLookup) peeks and sees KeyLookup so passes
+		//   stack => [nil, [d1,] ] <= (at ClusterLookup) peeks +2 and sees KeyLookup so passes
+		//   stack => [nil, [d1,], [d2,] ] <= push d2
 		//   stack => [nil, lookup([d1,], d2) ] <= (at KeyLookup) it takes the next value and lookups with key
 
 		case typeClusterLookup:
