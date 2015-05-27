@@ -51,9 +51,9 @@ func ConnectFileStore(dir string, depth int) (f *FileStore, err error) {
 // LOGIC
 // -----
 // * for the first element in cluster create results array
-//  * check whether the cluster is a leaf node
-//  * if yes, call KeyLookup, with key == NODES
-//  * if not, call listClusters
+//   * check whether the cluster is a leaf node
+//   * if yes, call KeyLookup, with key == NODES
+//   * if not, call listClusters
 // * if more elements are there, repeat the above
 //   but do an ArraytoSet with the results array
 func (f *FileStore) ClusterLookup(cluster *[]string) (*[]string, error) {

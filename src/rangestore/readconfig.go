@@ -21,6 +21,16 @@ func yamlKeyLookup(content []byte, key string) (*[]string, error) {
 		return &[]string{}, err
 	}
 
+	// handle KEYS seperately
+	// returns all the KEYS of a cluster
+	if key == "KEYS" {
+		var results = make([]string, 0)
+		for k := range u {
+			results = append(results, k)
+		}
+		return &results, nil
+	}
+
 	// check whether the map has the key we are looking for
 	value, ok := u[key]
 	if !ok {

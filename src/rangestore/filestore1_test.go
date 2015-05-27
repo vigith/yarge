@@ -53,6 +53,14 @@ func TestKeyLookup(t *testing.T) {
 	if err != nil || !compare(*result, expected) {
 		t.Errorf("Expected ERROR, (Cluster: %s, Key: %s) Expected: %s, Got: %s (Error: %s)", cluster, key, expected, *result, err)
 	}
+
+	cluster = []string{"data-qa-vpc5-log"}
+	key = "KEYS"
+	expected = []string{"AUTHORS", "NODES", "QAFOR"}
+	result, err = f.KeyLookup(&cluster, key)
+	if err != nil || !compare(*result, expected) {
+		t.Errorf("Expected ERROR, (Cluster: %s, Key: %s) Expected: %s, Got: %s (Error: %s)", cluster, key, expected, *result, err)
+	}
 }
 
 // test ClusterLookup
