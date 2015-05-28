@@ -328,7 +328,11 @@ func queryMapRev(key string, attr string, hint string) (*[]string, error) {
 	case "Ops":
 		if attr == "AUTHORS" {
 			if hint == "ops-prod-vpc1-mon" || hint == "ops-prod-vpc2-mon" || hint == "" {
-				return &[]string{"ops-prod-vpc1-mon", "ops-prod-vpc2-mon"}, nil
+				if hint == "" {
+					return &[]string{"ops-prod-vpc1-mon", "ops-prod-vpc2-mon"}, nil
+				} else {
+					return &[]string{hint}, nil
+				}
 			}
 			return &[]string{}, errors.New("Did not find any reverse lookup entry")
 		}
