@@ -16,6 +16,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"rangeops"
 	"strings"
 )
 
@@ -65,6 +66,10 @@ func (f *FileStore) ClusterLookup(cluster *[]string) (*[]string, error) {
 	// for each cluster, do a lookup
 	// (this will only happen only for nested lookups eg, %%..)
 	for _, elem := range *cluster {
+		// handle RANGE separately
+		if elem == "RANGE" {
+			elem = "."
+		}
 		var err error
 		isLeaf, err := f.checkIsLeafNode(elem)
 		if err != nil {
@@ -190,7 +195,13 @@ func (f *FileStore) listClusters(cluster string) ([]string, error) {
 	}
 	for _, f := range files {
 		if f.IsDir() {
-			children = append(children, f.Name())
+			// the cluster string to append the children with, when we get a
+			// top level query %RANGE, cluster = "."
+			if cluster != "." {
+				children = append(children, fmt.Sprintf("%s-%s", cluster, f.Name()))
+			} else {
+				children = append(children, f.Name())
+			}
 		}
 	}
 	return children, nil
@@ -283,7 +294,7 @@ func yamlKeyLookup(content []byte, key string) (*[]string, error) {
 		return &[]string{}, err
 	}
 
-	// handle KEYS seperately
+	// handle KEYS separately
 	// returns all the KEYS of a cluster
 	if key == "KEYS" {
 		var results = make([]string, 0)
@@ -314,6 +325,8 @@ func yamlKeyLookup(content []byte, key string) (*[]string, error) {
 				results = append(results, fmt.Sprintf("%t", elem.(bool)))
 			}
 		}
+		// make sure there are no duplicates
+		rangeops.ArrayToSet(&results)
 		return &results, nil
 		// if not an array, make it an array
 	case string:
