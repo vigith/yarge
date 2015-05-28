@@ -8,11 +8,44 @@
 package rangeexpr
 
 import (
+	"log"
+	"os"
 	"rangestore"
 	"testing"
 )
 
-var store, err = rangestore.ConnectTestStore("Test Store") // this can never return error
+var store interface{}
+
+// This is for setup and tear down.
+// the Only setup we require is to make sure
+// the store dir exists
+func TestMain(m *testing.M) {
+	var err error
+	var status int
+	log.Println("Testing using TestStore")
+	store, err = rangestore.ConnectTestStore("Test Store") // this can never return error
+	if err != nil {
+		log.Fatal(err)
+	}
+	// run the test with store == TestStore
+	status = m.Run()
+	if status == 0 {
+		// do something more
+		var dir = "../rangestore/t"
+		var depth = 3
+		var fast = false
+		log.Println("Testing using FileStore")
+		store, err = rangestore.ConnectFileStore(dir, depth, fast)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// run all the test with store == FileStore
+		status = m.Run()
+	}
+
+	//
+	os.Exit(status)
+}
 
 // ""
 // empty string
@@ -468,7 +501,7 @@ func TestRevParsing03(t *testing.T) {
 
 	r.Execute()
 	result, errs := r.Evaluate(store)
-	var expected = []string{"ops-prod-vpc1-mon", "ops-prod-vpc2-mon"}
+	var expected = []string{"ops-prod-vpc1-mon"}
 	if len(errs) != 0 || !compare(*result, expected) {
 		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
 	}
