@@ -179,7 +179,7 @@ func TestClusterLookup(t *testing.T) {
 	}
 
 	cluster = []string{"ops-prod-vpc1"}
-	expected = []string{"range", "mon"}
+	expected = []string{"ops-prod-vpc1-range", "ops-prod-vpc1-mon"}
 	result, err = f.ClusterLookup(&cluster)
 	if err != nil || !compare(*result, expected) {
 		t.Errorf("Expected NO ERROR, Cluster: %s, Expected: %s, Got: %s (Error: %s)", cluster, expected, *result, err)
@@ -255,7 +255,7 @@ func TestListClusters(t *testing.T) {
 	var node string
 	node = "ops-prod"
 	result, err = f.listClusters(node)
-	expected = []string{"vpc1", "vpc2"}
+	expected = []string{"ops-prod-vpc1", "ops-prod-vpc2"}
 	if !compare(result, expected) || err != nil {
 		t.Errorf("Expected NO ERROR, node [%s] IS NOT a LeafNode, Got [result:%s, error:%s]", node, result, err)
 	}
