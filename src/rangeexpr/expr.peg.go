@@ -1055,6 +1055,13 @@ func (p *RangeExpr) Init() {
 					{
 						position78 := position
 						depth++
+						if buffer[position] != rune(',') {
+							goto l77
+						}
+						position++
+						if !_rules[rulesp]() {
+							goto l77
+						}
 						if buffer[position] != rune('&') {
 							goto l77
 						}
@@ -1084,7 +1091,14 @@ func (p *RangeExpr) Init() {
 					{
 						position82 := position
 						depth++
-						if buffer[position] != rune('^') {
+						if buffer[position] != rune(',') {
+							goto l69
+						}
+						position++
+						if !_rules[rulesp]() {
+							goto l69
+						}
+						if buffer[position] != rune('-') {
 							goto l69
 						}
 						position++
@@ -1122,9 +1136,9 @@ func (p *RangeExpr) Init() {
 		},
 		/* 4 union <- <(',' rexpr cexpr? Action0)> */
 		nil,
-		/* 5 intersection <- <('&' rexpr cexpr? Action1)> */
+		/* 5 intersection <- <(',' sp '&' rexpr cexpr? Action1)> */
 		nil,
-		/* 6 difference <- <('^' rexpr cexpr? Action2)> */
+		/* 6 difference <- <(',' sp '-' rexpr cexpr? Action2)> */
 		nil,
 		/* 7 cluster <- <((('%' <('R' 'A' 'N' 'G' 'E')> Action3) / ('%' rexpr)) Action4 key?)> */
 		nil,

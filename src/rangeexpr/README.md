@@ -13,9 +13,9 @@ Range queries are parsed using [PEG](http://en.wikipedia.org/wiki/Parsing_expres
 
 ### Set Operatons:
   * `%range1 , %range2` == union (space is optional)
-  * `%range1 ^ %range2` == set difference
-  * `%range1 & %range2` == intersection
-  * `%range1,(%range1 & %range2)` == set operations with grouping using brackets
+  * `%range1 ,- %range2` == set difference
+  * `%range1 ,& %range2` == intersection
+  * `%range1,(%range1 ,& %range2)` == set operations with grouping using brackets
 
 ### Advanced Operations
   * `%RANGE`   == toplevel (here RANGE is a keyword)

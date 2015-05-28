@@ -26,9 +26,9 @@ cexpr <- sp
 
 union <- ',' rexpr cexpr? { p.addOperator(typeUnion) }
 
-intersection <- '&' rexpr cexpr? { p.addOperator(typeIntersection) }
+intersection <- ',' sp '&' rexpr cexpr? { p.addOperator(typeIntersection) }
 
-difference <- '^' rexpr cexpr? { p.addOperator(typeDifference) }
+difference <- ',' sp '-' rexpr cexpr? { p.addOperator(typeDifference) }
 
 cluster <- ('%' < 'RANGE' > { p.addValue(buffer[begin:end]); } / '%' rexpr) { p.addOperator(typeClusterLookup) } key?
 

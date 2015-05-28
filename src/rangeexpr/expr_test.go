@@ -196,16 +196,16 @@ func TestParsingComb02(t *testing.T) {
 	}
 }
 
-// "%a-b&%d"
+// "%a-b,&%d"
 // valid intersection operator query
 func TestParsingComb03(t *testing.T) {
-	var q = "(%ops-prod & %data-prod), test"
+	var q = "(%ops-prod ,& %data-prod), test"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
 	err := r.Parse()
 	if err != nil {
-		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (intersection), eg %%foo&%%bar]", q)
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (intersection), eg %%foo,&%%bar]", q)
 	}
 
 	r.Execute()
@@ -216,16 +216,16 @@ func TestParsingComb03(t *testing.T) {
 	}
 }
 
-// "%a-b^%d"
+// "%a-b,-%d"
 // valid difference operator query
 func TestParsingComb04(t *testing.T) {
-	var q = "%ops ^ %data"
+	var q = "%ops ,- %data"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
 	err := r.Parse()
 	if err != nil {
-		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (difference), eg %%foo^%%bar]", q)
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (difference), eg %%foo,-%%bar]", q)
 	}
 
 	r.Execute()
@@ -236,16 +236,16 @@ func TestParsingComb04(t *testing.T) {
 	}
 }
 
-// "%data-prod ^ %ops-prod ^ vpc2"
+// "%data-prod ,- %ops-prod ,- vpc2"
 // valid difference operator query
 func TestParsingComb05(t *testing.T) {
-	var q = "%data-prod ^ %ops-prod ^ vpc2"
+	var q = "%data-prod ,- %ops-prod ,- vpc2"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
 	err := r.Parse()
 	if err != nil {
-		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (difference), eg %%foo^%%bar]", q)
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (difference), eg %%foo,-%%bar]", q)
 	}
 
 	r.Execute()
@@ -256,16 +256,16 @@ func TestParsingComb05(t *testing.T) {
 	}
 }
 
-// "(%date-prod ^ %ops-prod) ^ vpc2"
+// "(%date-prod ,- %ops-prod) ,- vpc2"
 // difference with grouping together
 func TestParsingComb06(t *testing.T) {
-	var q = "(%data-prod ^ %ops-prod) ^ data-prod-vpc2"
+	var q = "(%data-prod ,- %ops-prod) ,- data-prod-vpc2"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
 	err := r.Parse()
 	if err != nil {
-		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (union, difference), eg (%%foo^%%bar),%%cow]", q)
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (union, difference), eg (%%foo,-%%bar),%%cow]", q)
 	}
 
 	r.Execute()
@@ -276,16 +276,16 @@ func TestParsingComb06(t *testing.T) {
 	}
 }
 
-// "%ops-prod, (%data-prod ^ vpc2)"
+// "%ops-prod, (%data-prod ,- vpc2)"
 // union and difference together
 func TestParsingComb07(t *testing.T) {
-	var q = "%ops-prod, (%data-prod ^ data-prod-vpc2)"
+	var q = "%ops-prod, (%data-prod ,- data-prod-vpc2)"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
 	err := r.Parse()
 	if err != nil {
-		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (union, difference), eg (%%foo^%%bar),%%cow]", q)
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (union, difference), eg (%%foo,-%%bar),%%cow]", q)
 	}
 
 	r.Execute()
@@ -296,16 +296,16 @@ func TestParsingComb07(t *testing.T) {
 	}
 }
 
-// "(%ops-prod & vpc2) , %data-prod ^ vpc2"
+// "(%ops-prod ,& vpc2) , %data-prod ,- vpc2"
 // union, difference and intersection together
 func TestParsingComb08(t *testing.T) {
-	var q = "(%ops-prod & vpc2) , %data-prod ^ %data-qa"
+	var q = "(%ops-prod ,& vpc2) , %data-prod ,- %data-qa"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
 	err := r.Parse()
 	if err != nil {
-		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (union, difference), eg (%%foo^%%bar),%%cow]", q)
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (union, difference), eg (%%foo,-%%bar),%%cow]", q)
 	}
 
 	r.Execute()
@@ -316,16 +316,16 @@ func TestParsingComb08(t *testing.T) {
 	}
 }
 
-// "%ops-prod & (vpc2 , %data-prod) ^ vpc2"
+// "%ops-prod ,& (vpc2 , %data-prod) ,- vpc2"
 // union, difference and intersection together
 func TestParsingComb09(t *testing.T) {
-	var q = "%ops-prod & (ops-prod-vpc2 , %data-prod) ^ %data-qa"
+	var q = "%ops-prod ,& (ops-prod-vpc2 , %data-prod) ,- %data-qa"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
 	err := r.Parse()
 	if err != nil {
-		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (union, difference), eg (%%foo^%%bar),%%cow]", q)
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (union, difference), eg (%%foo,-%%bar),%%cow]", q)
 	}
 
 	r.Execute()
@@ -339,13 +339,13 @@ func TestParsingComb09(t *testing.T) {
 // "%%data-qa-vpc5-log:QAFOR"
 // union, difference and intersection together
 func TestParsingComb10(t *testing.T) {
-	var q = "%%data-qa-vpc5-log:QAFOR & %data"
+	var q = "%%data-qa-vpc5-log:QAFOR ,& %data"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
 	err := r.Parse()
 	if err != nil {
-		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (union, difference), eg (%%foo^%%bar),%%cow]", q)
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (union, difference), eg (%%foo,-%%bar),%%cow]", q)
 	}
 
 	r.Execute()
@@ -391,11 +391,11 @@ func TestParsingKey02(t *testing.T) {
 	}
 }
 
-// "(*Ops;AUTHORS , *Vigith Maurice;AUTHORS) & (ops-prod-vpc1-range, ops-prod-vpc1-mon)"
+// "(*Ops;AUTHORS , *Vigith Maurice;AUTHORS) ,& (ops-prod-vpc1-range, ops-prod-vpc1-mon)"
 // (%ops-prod-vpc1-range:AUTHORS"
 // upper case key
 func TestParsingKey03(t *testing.T) {
-	var q = "(*Ops;AUTHORS , *Vigith Maurice;AUTHORS) & (ops-prod-vpc1-range, ops-prod-vpc1-mon)"
+	var q = "(*Ops;AUTHORS , *Vigith Maurice;AUTHORS) ,& (ops-prod-vpc1-range, ops-prod-vpc1-mon)"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
@@ -474,9 +474,9 @@ func TestRevParsing03(t *testing.T) {
 	}
 }
 
-// "(*Ops;AUTHORS , *Vigith Maurice;AUTHORS) & (ops-prod-vpc1-range, ops-prod-vpc1-mon)"
+// "(*Ops;AUTHORS , *Vigith Maurice;AUTHORS) ,& (ops-prod-vpc1-range, ops-prod-vpc1-mon)"
 func TestRevParsing04(t *testing.T) {
-	var q = "(*Ops;AUTHORS , *Vigith Maurice;AUTHORS) & (ops-prod-vpc1-range, ops-prod-vpc1-mon)"
+	var q = "(*Ops;AUTHORS , *Vigith Maurice;AUTHORS) ,& (ops-prod-vpc1-range, ops-prod-vpc1-mon)"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
@@ -493,9 +493,9 @@ func TestRevParsing04(t *testing.T) {
 	}
 }
 
-// "*Ops;AUTHORS , (*Vigith Maurice;AUTHORS & ops-prod-vpc1-range) , ops-prod-vpc1-mon"
+// "*Ops;AUTHORS , (*Vigith Maurice;AUTHORS ,& ops-prod-vpc1-range) , ops-prod-vpc1-mon"
 func TestRevParsing05(t *testing.T) {
-	var q = "*Ops;AUTHORS , (*Vigith Maurice;AUTHORS & ops-prod-vpc1-range) , ops-prod-vpc1-mon"
+	var q = "*Ops;AUTHORS , (*Vigith Maurice;AUTHORS ,& ops-prod-vpc1-range) , ops-prod-vpc1-mon"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
