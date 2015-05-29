@@ -22,6 +22,8 @@ var store interface{}
 func TestMain(m *testing.M) {
 	var err error
 	var status int
+	// remove timestamp
+	log.SetFlags(0)
 	log.Println("Testing using TestStore")
 	store, err = rangestore.ConnectTestStore("Test Store") // this can never return error
 	if err != nil {
