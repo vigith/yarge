@@ -113,6 +113,11 @@ func ConnectTestStore(test string) (t *TestStore, err error) {
 	return t, nil
 }
 
+// nothing to cleanup
+func (f *TestStore) DisconnectTestStore() {
+	return
+}
+
 // query map
 func queryMap(cluster string, key string) (*[]string, error) {
 	switch cluster {

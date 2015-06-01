@@ -1,31 +1,11 @@
 package rangestore
 
 import (
-	"log"
-	"os"
 	"testing"
 )
 
-var f *FileStore
-var dir = "./t"
-var depth = 3
-var fast = false
-
-// This is for setup and tear down.
-// the Only setup we require is to make sure
-// the store dir exists
-func TestMain(m *testing.M) {
-	var err error
-	f, err = ConnectFileStore(dir, depth, fast)
-	if err != nil {
-		log.Fatal(err)
-	}
-	// we don't have tear down
-	os.Exit(m.Run())
-}
-
 // KeyReverseLookup (major testing is done in TestKeyReverseLookupHint)
-func TestKeyReverseLookup(t *testing.T) {
+func TestFileKeyReverseLookup(t *testing.T) {
 	key := "range1001.ops.example.com"
 	results, err := f.KeyReverseLookup(key)
 	expected := []string{"ops-prod-vpc1-range"}
@@ -35,7 +15,7 @@ func TestKeyReverseLookup(t *testing.T) {
 }
 
 // KeyReverseLookupAttr (major testing is done in TestKeyReverseLookupHint)
-func TestKeyReverseLookupAttr(t *testing.T) {
+func TestFileKeyReverseLookupAttr(t *testing.T) {
 	key := "data@example.com"
 	attr := "AUTHORS"
 	results, err := f.KeyReverseLookupAttr(key, attr)
@@ -46,7 +26,7 @@ func TestKeyReverseLookupAttr(t *testing.T) {
 }
 
 // KeyReverseLookupHint
-func TestKeyReverseLookupHint(t *testing.T) {
+func TestFileKeyReverseLookupHint(t *testing.T) {
 	var err error
 	var results *[]string
 	var expected []string
@@ -95,7 +75,7 @@ func TestKeyReverseLookupHint(t *testing.T) {
 }
 
 // getAllLeafNodes
-func TestGetAllLeafNodes(t *testing.T) {
+func TestFileGetAllLeafNodes(t *testing.T) {
 	var err error
 	var results *[]string
 	var expected []string
@@ -124,7 +104,7 @@ func TestGetAllLeafNodes(t *testing.T) {
 }
 
 // key lookup
-func TestKeyLookup(t *testing.T) {
+func TestFileKeyLookup(t *testing.T) {
 	var cluster []string
 	var err error
 	var result *[]string
@@ -165,7 +145,7 @@ func TestKeyLookup(t *testing.T) {
 }
 
 // test ClusterLookup
-func TestClusterLookup(t *testing.T) {
+func TestFileClusterLookup(t *testing.T) {
 	var cluster []string
 	var err error
 	var result *[]string
@@ -194,7 +174,7 @@ func TestClusterLookup(t *testing.T) {
 }
 
 // test yamlKeyLookup
-func TestYamlKeyLookup(t *testing.T) {
+func TestFileYamlKeyLookup(t *testing.T) {
 	var content string
 	var key string
 	var result *[]string
@@ -226,7 +206,7 @@ func TestYamlKeyLookup(t *testing.T) {
 	}
 
 	content = `
-foo: 
+foo:
   - bar
   - 1
   - true
@@ -248,7 +228,7 @@ foo:
 }
 
 // test listClusters
-func TestListClusters(t *testing.T) {
+func TestFileListClusters(t *testing.T) {
 	var result []string
 	var err error
 	var expected []string
@@ -269,7 +249,7 @@ func TestListClusters(t *testing.T) {
 }
 
 // test checkIsLeafNode
-func TestCheckIsLeafNode(t *testing.T) {
+func TestFileCheckIsLeafNode(t *testing.T) {
 	var status bool
 	var err error
 	var node = "ops"
@@ -289,31 +269,4 @@ func TestCheckIsLeafNode(t *testing.T) {
 	if status || err == nil {
 		t.Errorf("Expected ERROR, node [%s] IS NOT a LeafNode, NO such range, Got [bool:%v, error:%s]", node, status, err)
 	}
-}
-
-// Internal Functions
-
-// Compare 2 Arrays, items need not be in correct order
-func compare(arr1, arr2 []string) bool {
-	if len(arr1) != len(arr2) {
-		return false
-	}
-
-	if len(arr1) == 0 {
-		return true
-	}
-
-	var flag bool
-	for _, value1 := range arr1 {
-		for _, value2 := range arr2 {
-			if value1 == value2 {
-				flag = true
-			}
-		}
-		if !flag {
-			return false
-		}
-	}
-
-	return true
 }

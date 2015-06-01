@@ -30,15 +30,20 @@ func ConnectGenericStore(dir string) (*GenericStore, error) {
 	return nil, nil
 }
 
+// for cleanup routine if any
+func (g *GenericStore) DisconnectGenericStore() {
+	return
+}
+
 ////////////////////
 // LOOKUP CLUSTER //
 ////////////////////
 
-func (f *GenericStore) ClusterLookup(cluster *[]string) (*[]string, error) {
+func (g *GenericStore) ClusterLookup(cluster *[]string) (*[]string, error) {
 	return &[]string{}, nil
 }
 
-func (f *GenericStore) KeyLookup(cluster *[]string, key string) (*[]string, error) {
+func (g *GenericStore) KeyLookup(cluster *[]string, key string) (*[]string, error) {
 	return &[]string{}, nil
 }
 
@@ -46,14 +51,14 @@ func (f *GenericStore) KeyLookup(cluster *[]string, key string) (*[]string, erro
 // LOOKUP REVERSE //
 ////////////////////
 
-func (f *GenericStore) KeyReverseLookup(key string) (*[]string, error) {
+func (g *GenericStore) KeyReverseLookup(key string) (*[]string, error) {
 	return &[]string{}, nil
 }
 
-func (f *GenericStore) KeyReverseLookupAttr(key string, attr string) (*[]string, error) {
+func (g *GenericStore) KeyReverseLookupAttr(key string, attr string) (*[]string, error) {
 	return &[]string{}, nil
 }
 
-func (f *GenericStore) KeyReverseLookupHint(key string, attr string, hint string) (*[]string, error) {
+func (g *GenericStore) KeyReverseLookupHint(key string, attr string, hint string) (*[]string, error) {
 	return &[]string{}, nil
 }

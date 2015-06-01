@@ -20,7 +20,7 @@ import (
 	"strings"
 )
 
-var _config = "cluster.yaml"
+const _config = "cluster.yaml"
 
 type FileStore struct {
 	StorePath  string // directory where yamls are stored
@@ -31,7 +31,7 @@ type FileStore struct {
 // check whether the StorePath Exists, etc
 func ConnectFileStore(dir string, depth int, fast bool) (f *FileStore, err error) {
 	// removing trailing path seperator
-	if os.IsPathSeparator(dir[len(dir)-1]) {
+	if len(dir) > 0 && os.IsPathSeparator(dir[len(dir)-1]) {
 		dir = dir[:len(dir)-1]
 	}
 	var fi os.FileInfo
@@ -46,6 +46,11 @@ func ConnectFileStore(dir string, depth int, fast bool) (f *FileStore, err error
 	}
 	f = &FileStore{StorePath: dir, MaxDepth: depth, FastLookup: fast}
 	return f, nil
+}
+
+// nothing to cleanup
+func (f *FileStore) DisconnectFileStore() {
+	return
 }
 
 ////////////////////

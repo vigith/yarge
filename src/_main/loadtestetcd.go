@@ -23,17 +23,23 @@ import (
 
 func main() {
 	log.SetFlags(log.Lshortfile)
-	log.Println("Connecting to FileStore")
-	var store, err = rangestore.ConnectFileStore("../rangestore/t", -1, false)
+	var storedir = "../rangestore/t"
+	log.Printf("Connecting to FileStore [storedir: %s]", storedir)
+	var store, err = rangestore.ConnectFileStore(storedir, -1, false)
 	if err != nil {
 		log.Fatal("Error in Connecting to Store", err)
 	}
 
 	var host = "127.0.0.1"
-	var port = 3824
+	var port = 13824
 	log.Printf("Connecting to Etcd [http://%s:%d]", host, port)
 	machines := []string{fmt.Sprintf("http://%s:%d", host, port)}
 	client := etcd.NewClient(machines)
+	// defer the close
+	defer func() {
+		log.Println("Closing Etcd Connection")
+		client.Close()
+	}()
 
 	var res *[]string
 	var errs []error
@@ -41,18 +47,18 @@ func main() {
 
 	var response *etcd.Response
 
-	response, err = client.Get("_test_store", false, false)
+	response, err = client.Get("_range_store", false, false)
 	// we have to make sure we have a clean testing area
 	if err == nil {
-		log.Printf("Looks like the testetcd is already populated [%s : %s]", response.Node.Key, response.Node.Value)
-		log.Fatal("Please reformat your testetcd cluster")
+		log.Printf("Looks like the test-etcd (http://%s:%d) is already populated [%s : %s]", host, port, response.Node.Key, response.Node.Value)
+		log.Fatal("Please reformat your test-etcd cluster")
 	} else if err != nil && err.(*etcd.EtcdError).ErrorCode != 100 {
 		// don't fatal out if the error is, key not present, it is expected
 		log.Fatal(err)
 	}
 
-	// make a note saying, data has been populated
-	_, _ = client.Set("_test_store", "loading", 0)
+	// make a note saying, we have started populating data
+	_, _ = client.Set("_range_store", "loading", 0)
 
 	// we can load the etcd in 4 major steps
 	// 1. get the top level range and create dirs
@@ -108,7 +114,7 @@ func main() {
 	log.Println("Steps 4 (create leaf nodes) - DONE")
 
 	// make a note saying, data has been populated
-	_, _ = client.Set("_test_store", "loaded", 0)
+	_, _ = client.Set("_range_store", "loaded", 0)
 
 	return
 }

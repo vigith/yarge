@@ -26,8 +26,10 @@ func main() {
 	r.Execute()
 
 	var store, err = rangestore.ConnectTestStore("Test Store") // this can never return error
+	//	var store, err = rangestore.ConnectFileStore("../rangestore/t", 3, false)
 	if err != nil {
 		fmt.Println("Error in Connecting to Store", err)
+		return
 	}
 	res, errs := r.Evaluate(store)
 	fmt.Printf("= %v (errors: %v)\n", res, errs)
