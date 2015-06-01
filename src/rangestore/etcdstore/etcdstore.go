@@ -1,6 +1,6 @@
 // etcd will queried when this store is used
 
-package rangestore
+package etcdstore
 
 import (
 	"errors"
