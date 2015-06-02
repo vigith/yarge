@@ -28,7 +28,7 @@ func TestMain(m *testing.M) {
 }
 
 // KeyReverseLookup (major testing is done in TestKeyReverseLookupHint)
-func TestFileKeyReverseLookup(t *testing.T) {
+func TestKeyReverseLookup(t *testing.T) {
 	key := "range1001.ops.example.com"
 	results, err := f.KeyReverseLookup(key)
 	expected := []string{"ops-prod-vpc1-range"}
@@ -38,7 +38,7 @@ func TestFileKeyReverseLookup(t *testing.T) {
 }
 
 // KeyReverseLookupAttr (major testing is done in TestKeyReverseLookupHint)
-func TestFileKeyReverseLookupAttr(t *testing.T) {
+func TestKeyReverseLookupAttr(t *testing.T) {
 	key := "data@example.com"
 	attr := "AUTHORS"
 	results, err := f.KeyReverseLookupAttr(key, attr)
@@ -49,7 +49,7 @@ func TestFileKeyReverseLookupAttr(t *testing.T) {
 }
 
 // KeyReverseLookupHint
-func TestFileKeyReverseLookupHint(t *testing.T) {
+func TestKeyReverseLookupHint(t *testing.T) {
 	var err error
 	var results *[]string
 	var expected []string
@@ -98,7 +98,7 @@ func TestFileKeyReverseLookupHint(t *testing.T) {
 }
 
 // getAllLeafNodes
-func TestFileGetAllLeafNodes(t *testing.T) {
+func TestGetAllLeafNodes(t *testing.T) {
 	var err error
 	var results *[]string
 	var expected []string
@@ -126,8 +126,8 @@ func TestFileGetAllLeafNodes(t *testing.T) {
 	}
 }
 
-// key lookup
-func TestFileKeyLookup(t *testing.T) {
+// KeyLookup
+func TestKeyLookup(t *testing.T) {
 	var cluster []string
 	var err error
 	var result *[]string
@@ -155,7 +155,7 @@ func TestFileKeyLookup(t *testing.T) {
 	expected = []string{"data"}
 	result, err = f.KeyLookup(&cluster, key)
 	if err != nil || !compare(*result, expected) {
-		t.Errorf("Expected ERROR, (Cluster: %s, Key: %s) Expected: %s, Got: %s (Error: %s)", cluster, key, expected, *result, err)
+		t.Errorf("Expected NO ERROR, (Cluster: %s, Key: %s) Expected: %s, Got: %s (Error: %s)", cluster, key, expected, *result, err)
 	}
 
 	cluster = []string{"data-qa-vpc5-log"}
@@ -163,12 +163,20 @@ func TestFileKeyLookup(t *testing.T) {
 	expected = []string{"AUTHORS", "NODES", "QAFOR"}
 	result, err = f.KeyLookup(&cluster, key)
 	if err != nil || !compare(*result, expected) {
+		t.Errorf("Expected NO ERROR, (Cluster: %s, Key: %s) Expected: %s, Got: %s (Error: %s)", cluster, key, expected, *result, err)
+	}
+
+	cluster = []string{"data-qa-vpc5-log"}
+	key = "FOOBAR"
+	expected = []string{}
+	result, err = f.KeyLookup(&cluster, key)
+	if err == nil || !compare(*result, expected) {
 		t.Errorf("Expected ERROR, (Cluster: %s, Key: %s) Expected: %s, Got: %s (Error: %s)", cluster, key, expected, *result, err)
 	}
 }
 
 // test ClusterLookup
-func TestFileClusterLookup(t *testing.T) {
+func TestClusterLookup(t *testing.T) {
 	var cluster []string
 	var err error
 	var result *[]string
@@ -197,7 +205,7 @@ func TestFileClusterLookup(t *testing.T) {
 }
 
 // test yamlKeyLookup
-func TestFileYamlKeyLookup(t *testing.T) {
+func TestYamlKeyLookup(t *testing.T) {
 	var content string
 	var key string
 	var result *[]string
@@ -251,7 +259,7 @@ foo:
 }
 
 // test listClusters
-func TestFileListClusters(t *testing.T) {
+func TestListClusters(t *testing.T) {
 	var result []string
 	var err error
 	var expected []string
@@ -265,14 +273,14 @@ func TestFileListClusters(t *testing.T) {
 
 	node = "ops-foobar"
 	result, err = f.listClusters(node)
-	expected = []string{""}
-	if compare(result, expected) || err == nil {
-		t.Errorf("Expected ERROR, node [%s] is not present, Got [result:%s, error:%s]", node, result, err)
+	expected = []string{}
+	if !compare(result, expected) || err == nil {
+		t.Errorf("Expected NO ERROR, node [%s] is not present, Got [result:%s, error:%s]", node, result, err)
 	}
 }
 
 // test checkIsLeafNode
-func TestFileCheckIsLeafNode(t *testing.T) {
+func TestCheckIsLeafNode(t *testing.T) {
 	var status bool
 	var err error
 	var node = "ops"
