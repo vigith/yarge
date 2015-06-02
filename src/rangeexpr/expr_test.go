@@ -10,7 +10,9 @@ package rangeexpr
 import (
 	"log"
 	"os"
+	//	"rangestore/etcdstore"
 	"rangestore"
+	"rangestore/filestore"
 	"testing"
 )
 
@@ -33,11 +35,11 @@ func TestMain(m *testing.M) {
 	status = m.Run()
 	if status == 0 {
 		// do something more
-		var dir = "../rangestore/t"
+		var dir = "../rangestore/filestore/t"
 		var depth = 3
 		var fast = false
 		log.Println("Testing using FileStore")
-		store, err = rangestore.ConnectFileStore(dir, depth, fast)
+		store, err = filestore.ConnectFileStore(dir, depth, fast)
 		if err != nil {
 			log.Fatal(err)
 		}
