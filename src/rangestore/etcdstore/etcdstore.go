@@ -11,6 +11,7 @@ import (
 )
 
 const _leaf = "_leaf"
+const _sep = "\t"
 
 type EtcdStore struct {
 	hosts      []string     // http://host1:port,..
@@ -74,6 +75,85 @@ func (e *EtcdStore) DisconnectEtcdStore() {
 func (e *EtcdStore) ClusterLookup(cluster *[]string) (*[]string, error) {
 	// store the resuls
 	var results = make([]string, 0)
+	// for each cluster, do a lookup
+	// (this will only happen only for nested lookups eg, %%..)
+	for _, elem := range *cluster {
+		// handle RANGE separately
+		if elem == "RANGE" {
+			elem = "/"
+		}
+		var err error
+		isLeaf, err := e.checkIsLeafNode(elem)
+		if err != nil {
+			return &[]string{}, err
+		}
+		// if it is a leaf node, we need do a KeyLookup (NODES)
+		if isLeaf {
+			// by default, lookup for NODES
+			result, err := e.KeyLookup(&[]string{elem}, "NODES")
+			if err != nil {
+				return &[]string{}, err
+			}
+			results = append(results, *result...)
+		} else { // we need to return the children
+			result, err := e.listClusters(elem)
+			if err != nil {
+				return &[]string{}, err
+			}
+			results = append(results, result...)
+		}
+
+	}
+
+	return &results, nil
+}
+
+func (e *EtcdStore) KeyLookup(cluster *[]string, key string) (*[]string, error) {
+	// store the resuls
+	var results = make([]string, 0)
+	// this will most likely be single element arrays
+	// can't think of a reason otherwise
+	for _, elem := range *cluster {
+		dir := e.clusterToPath(elem)
+		node := fmt.Sprintf("%s/%s", dir, key)
+		var result []string
+		if key == "KEYS" {
+			response, _, _, found, err := e.retrieveFromEtcd(dir, false, false)
+			// if there is an error, return err
+			if err != nil { // got error
+				return &[]string{}, err
+			} else if !found { // key not found
+				return &[]string{}, errors.New(fmt.Sprintf("KeyLookup for [%s:%s] Failed (Error: No KEY Found)", elem, key))
+			}
+
+			// if response is NOT for a dir
+			if !response.Node.Dir {
+				var _err = fmt.Sprintf("Expected value of lookup [%s] to be a dir, recieved a leaf file", dir)
+				log.Printf(_err)
+				return &[]string{}, errors.New(_err)
+			}
+
+			for _, n := range response.Node.Nodes {
+				// replace '/' with '-', also root will always be '/'
+				_node := strings.Split(n.Key, "/")
+				if len(_node) > 0 {
+					result = append(result, _node[len(_node)-1])
+				}
+			}
+		} else {
+			// 1. read the key in etcd
+			// 2. append the result
+			_, _, value, found, err := e.retrieveFromEtcd(node, false, false)
+			if err != nil {
+				return &[]string{}, errors.New(fmt.Sprintf("KeyLookup for [%s:%s] Failed (Error: %s)", elem, key, err))
+			} else if !found {
+				return &[]string{}, errors.New(fmt.Sprintf("KeyLookup for [%s:%s] Failed (Error: No KEY Found)", elem, key))
+			}
+			result = strings.Split(value, _sep)
+		}
+		// append the result with results
+		results = append(results, result...)
+	}
 
 	return &results, nil
 }
@@ -96,11 +176,14 @@ func (e *EtcdStore) listClusters(cluster string) ([]string, error) {
 	// list the nodes under this cluster.
 	// we are sure when this call was made, the check
 	// has been made to sure this is not a leaf node
-	response, _, _, _, err := e.retrieveFromEtcd(dir, false, false)
+	response, _, _, found, err := e.retrieveFromEtcd(dir, false, false)
 	// if there is an error, return err
-	if err != nil {
+	if err != nil { // got error
 		return []string{}, err
+	} else if !found { // key not found
+		return []string{}, nil
 	}
+
 	// if response is NOT for a dir
 	if !response.Node.Dir {
 		var _err = fmt.Sprintf("Expected value of lookup [%s] to be a dir, recieved a leaf file", dir)
@@ -109,7 +192,9 @@ func (e *EtcdStore) listClusters(cluster string) ([]string, error) {
 	}
 
 	for _, n := range response.Node.Nodes {
-		children = append(children, n.Value)
+		// replace '/' with '-', also root will always be '/'
+		_node := strings.Replace(n.Key[1:], "/", "-", -1)
+		children = append(children, _node)
 	}
 
 	return children, nil
@@ -136,7 +221,7 @@ func (e *EtcdStore) retrieveFromEtcd(object string, sort, recursive bool) (respo
 		log.Printf("ERROR: Etcd Store Returned Error: %s\n", err)
 		return response, object, "", false, err
 	}
-	log.Println("there", object)
+
 	// if all is good
 	return response, response.Node.Key, response.Node.Value, true, nil
 }
