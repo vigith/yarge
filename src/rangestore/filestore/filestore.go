@@ -7,7 +7,7 @@
 // the cache is by sending some signals to reread the file and update the cache.
 // Also we should make sure we reread only the specific files in question).
 
-package rangestore
+package filestore
 
 import (
 	"errors"
