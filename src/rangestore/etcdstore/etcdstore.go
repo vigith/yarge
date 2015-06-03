@@ -349,7 +349,7 @@ func (e *EtcdStore) retrieveFromEtcd(object string, sort, recursive bool) (respo
 func (e *EtcdStore) optimizedNodeReverseLookup(key string) (*[]string, error) {
 	_, _, value, found, err := e.retrieveFromEtcd(fmt.Sprintf("%s/%s", _roptimize, key), false, false)
 	if !found {
-		return &[]string{}, nil
+		return &[]string{}, errors.New(fmt.Sprintf("Key NOT Found [%s]", key))
 	} else if err != nil {
 		return &[]string{}, err
 	}
