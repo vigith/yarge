@@ -10,8 +10,8 @@ package rangeexpr
 import (
 	"log"
 	"os"
-	//	"rangestore/etcdstore"
 	"rangestore"
+	"rangestore/etcdstore"
 	"rangestore/filestore"
 	"testing"
 )
@@ -26,6 +26,7 @@ func TestMain(m *testing.M) {
 	var status int
 	// remove timestamp
 	log.SetFlags(0)
+
 	log.Println("Testing using TestStore")
 	store, err = rangestore.ConnectTestStore("Test Store") // this can never return error
 	if err != nil {
@@ -33,22 +34,42 @@ func TestMain(m *testing.M) {
 	}
 	// run the test with store == TestStore
 	status = m.Run()
-	if status == 0 {
-		// do something more
-		var dir = "../rangestore/filestore/t"
-		var depth = 3
-		var fast = false
-		log.Println("Testing using FileStore")
-		store, err = filestore.ConnectFileStore(dir, depth, fast)
-		if err != nil {
-			log.Fatal(err)
-		}
-		// run all the test with store == FileStore
-		status = m.Run()
+	if status != 0 {
+		os.Exit(status)
+	}
+	// do something more
+	var dir = "../rangestore/filestore/t"
+	var depth = 3
+	var fast = false
+	log.Println("Testing using FileStore")
+	store, err = filestore.ConnectFileStore(dir, depth, fast)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// run all the test with store == FileStore
+	status = m.Run()
+
+	if status != 0 {
+		os.Exit(status)
 	}
 
-	//
-	os.Exit(status)
+	// etcdstore
+	var hosts = []string{"http://127.0.0.1:13824"}
+	var roptimize = false
+	var efast = false
+	var node = ""
+	log.Println("Testing using EtcdStore")
+	store, err = etcdstore.ConnectEtcdStore(hosts, roptimize, efast, node)
+	if err != nil {
+		log.Fatal("ConnectEtcdStore ", err)
+	}
+
+	// run all the test with store == EtcdStore
+	status = m.Run()
+
+	if status != 0 {
+		os.Exit(status)
+	}
 }
 
 // ""
