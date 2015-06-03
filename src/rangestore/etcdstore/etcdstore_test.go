@@ -31,6 +31,18 @@ func TestMain(m *testing.M) {
 	os.Exit(status)
 }
 
+// optimizedNodeReverseLookup
+func TestOptimizedNodeReverseLookup(t *testing.T) {
+	e.ROptimize = true
+	key := "range1001.ops.example.com"
+	results, err := e.optimizedNodeReverseLookup(key)
+	expected := []string{"ops-prod-vpc1-range"}
+	if err != nil || !compare(*results, expected) {
+		t.Errorf("Expected NO ERROR, (Key: %s) Expected: %s, Got: %s (Error: %s)", key, expected, *results, err)
+	}
+	e.ROptimize = false
+}
+
 // KeyReverseLookup (major testing is done in TestKeyReverseLookupHint)
 func TestKeyReverseLookup(t *testing.T) {
 	key := "range1001.ops.example.com"
