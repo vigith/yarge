@@ -138,7 +138,7 @@ func (f *FileStore) KeyReverseLookupAttr(key string, attr string) (*[]string, er
 	return f.KeyReverseLookupHint(key, attr, "")
 }
 
-// given a key, it will serach for the cluster where the attr has that key
+// given a key, it will search for the cluster where the attr has that key,
 // hint is to limit the scope of search
 func (f *FileStore) KeyReverseLookupHint(key string, attr string, hint string) (*[]string, error) {
 	var clusters *[]string
