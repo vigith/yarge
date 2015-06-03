@@ -1,6 +1,9 @@
 package rangeexpr
 
-import "testing"
+import (
+	"rangestore/etcdstore"
+	"testing"
+)
 
 // this is to avoid compiler optimization, used in benchmarking
 var result *[]string
@@ -45,7 +48,14 @@ func BenchmarkKeyLookup(b *testing.B) {
 }
 
 func BenchmarkKeyReverse(b *testing.B) {
-	benchMark("*range1001.ops.example.com", b)
+	switch store.(type) {
+	case *etcdstore.EtcdStore:
+		store.(*etcdstore.EtcdStore).ROptimize = true
+		benchMark("*range1001.ops.example.com", b)
+		store.(*etcdstore.EtcdStore).ROptimize = false
+	default:
+		benchMark("*range1001.ops.example.com", b)
+	}
 }
 
 func BenchmarkKeyReverseAttr(b *testing.B) {
