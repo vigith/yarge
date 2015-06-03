@@ -158,6 +158,62 @@ func (e *EtcdStore) KeyLookup(cluster *[]string, key string) (*[]string, error) 
 	return &results, nil
 }
 
+////////////////////
+// LOOKUP REVERSE //
+////////////////////
+
+// same as KeyReverseLookupAttr where attr == NODES
+func (e *EtcdStore) KeyReverseLookup(key string) (*[]string, error) {
+	if e.ROptimize {
+		return &[]string{}, errors.New("ROptimize is not yet implemented!")
+	}
+	return e.KeyReverseLookupAttr(key, "NODES")
+}
+
+// same as KeyReverseLookupAttr where attr == NODES and hint == ""
+func (e *EtcdStore) KeyReverseLookupAttr(key string, attr string) (*[]string, error) {
+	return e.KeyReverseLookupHint(key, attr, "")
+}
+
+// given a key, it will search for the cluster where the attr has that key,
+// hint is to limit the scope of search
+func (e *EtcdStore) KeyReverseLookupHint(key string, attr string, hint string) (*[]string, error) {
+	var clusters *[]string
+	var err error
+	var results = make([]string, 0)
+	var seen bool
+
+	clusters, err = e.getAllLeafNodes(hint)
+	if err != nil {
+		return &results, nil
+	}
+
+	for _, elem := range *clusters {
+
+		// 1. read the key in etcd
+		// 2. append the result
+		_, _, value, found, err := e.retrieveFromEtcd(fmt.Sprintf("%s/%s", e.clusterToPath(elem), attr), false, false)
+		if err != nil {
+			return &[]string{}, errors.New(fmt.Sprintf("KeyLookup for [%s:%s] Failed (Error: %s)", elem, key, err))
+		} else if !found {
+			continue
+		} else {
+			result := strings.Split(value, _sep)
+			for _, i := range result {
+				if i == key {
+					results = append(results, elem)
+					seen = true
+					break
+				}
+			}
+			if seen && e.FastLookup {
+				return &results, nil
+			}
+		}
+	}
+	return &results, nil
+}
+
 ////////////////////////
 // Internal Functions //
 ////////////////////////
@@ -166,6 +222,67 @@ func (e *EtcdStore) KeyLookup(cluster *[]string, key string) (*[]string, error) 
 // in the file system
 func (e *EtcdStore) clusterToPath(cluster string) string {
 	return fmt.Sprintf("%s/%s", e.storenode, strings.Replace(cluster, "-", "/", -1))
+}
+
+// Get all the leaf cluster nodes for a given dir
+// it is not efficient since we have to walk down all the path
+func (e *EtcdStore) getAllLeafNodes(root string) (*[]string, error) {
+	var results = make([]string, 0)
+	var err error
+
+	// root a leaf node
+	isleaf, err := e.checkIsLeafNode(root)
+	if err != nil {
+		return &[]string{}, err
+	}
+	if isleaf {
+		return &[]string{root}, nil
+	}
+
+	err = e._getAllLeafNodes(e.clusterToPath(root), &results)
+
+	if err != nil {
+		return &[]string{}, err
+	}
+
+	// fix the results in place
+	for i := 0; i < len(results); i++ {
+		results[i] = strings.Replace(strings.Trim(results[i], "/"), "/", "-", -1)
+	}
+
+	return &results, nil
+}
+
+// the function that really does the work
+func (e *EtcdStore) _getAllLeafNodes(root string, results *[]string) error {
+	response, _, _, found, err := e.retrieveFromEtcd(root, false, false)
+	// if there is an error, return err
+	if err != nil { // got error
+		return err
+	} else if !found { // key not found
+		return errors.New(fmt.Sprintf("DirLookup for [%s] Failed (Error: No DIR Found)", root))
+	}
+
+	// if response is NOT for a dir
+	if !response.Node.Dir {
+		var _err = fmt.Sprintf("Expected value of lookup [%s] to be a dir, recieved a leaf file", root)
+		log.Printf(_err)
+		return errors.New(_err)
+	}
+
+	for _, n := range response.Node.Nodes {
+		status, err := e.checkIsLeafNode(n.Key)
+		if err != nil {
+			return err
+		}
+		if status {
+			*results = append(*results, n.Key)
+		} else {
+			_ = e._getAllLeafNodes(n.Key, results)
+		}
+	}
+
+	return nil
 }
 
 // reads the child clusters of this cluster.
