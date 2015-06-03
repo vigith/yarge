@@ -12,6 +12,7 @@ import (
 
 const _leaf = "_leaf"
 const _sep = "\t"
+const _roptimize = "/_roptimize"
 
 type EtcdStore struct {
 	hosts      []string     // http://host1:port,..
@@ -164,14 +165,15 @@ func (e *EtcdStore) KeyLookup(cluster *[]string, key string) (*[]string, error) 
 
 // same as KeyReverseLookupAttr where attr == NODES
 func (e *EtcdStore) KeyReverseLookup(key string) (*[]string, error) {
-	if e.ROptimize {
-		return &[]string{}, errors.New("ROptimize is not yet implemented!")
-	}
 	return e.KeyReverseLookupAttr(key, "NODES")
 }
 
 // same as KeyReverseLookupAttr where attr == NODES and hint == ""
 func (e *EtcdStore) KeyReverseLookupAttr(key string, attr string) (*[]string, error) {
+	// optimization, for nodes don't do the tough thing
+	if e.ROptimize && attr == "NODES" {
+		return e.optimizedNodeReverseLookup(key)
+	}
 	return e.KeyReverseLookupHint(key, attr, "")
 }
 
@@ -341,4 +343,16 @@ func (e *EtcdStore) retrieveFromEtcd(object string, sort, recursive bool) (respo
 
 	// if all is good
 	return response, response.Node.Key, response.Node.Value, true, nil
+}
+
+// same as KeyReverseLookupAttr where attr == NODES and hint == ""
+func (e *EtcdStore) optimizedNodeReverseLookup(key string) (*[]string, error) {
+	_, _, value, found, err := e.retrieveFromEtcd(fmt.Sprintf("%s/%s", _roptimize, key), false, false)
+	if !found {
+		return &[]string{}, nil
+	} else if err != nil {
+		return &[]string{}, err
+	}
+	values := strings.Split(value, _sep)
+	return &values, nil
 }
