@@ -17,15 +17,15 @@ import (
 	"github.com/coreos/go-etcd/etcd"
 	"log"
 	"rangeexpr"
-	"rangestore"
+	"rangestore/filestore"
 	"strings"
 )
 
 func main() {
 	log.SetFlags(log.Lshortfile)
-	var storedir = "../rangestore/t"
+	var storedir = "../rangestore/filestore/t"
 	log.Printf("Connecting to FileStore [storedir: %s]", storedir)
-	var store, err = rangestore.ConnectFileStore(storedir, -1, false)
+	var store, err = filestore.ConnectFileStore(storedir, -1, false)
 	if err != nil {
 		log.Fatal("Error in Connecting to Store", err)
 	}
@@ -42,6 +42,7 @@ func main() {
 	}()
 
 	var res *[]string
+
 	var errs []error
 	var query string
 
@@ -113,6 +114,48 @@ func main() {
 	}
 	log.Println("Steps 4 (create leaf nodes) - DONE")
 
+	log.Println("Steps 5 (reverse Lookup Optimization) - START")
+	var reverseHash map[string][]string
+	reverseHash = make(map[string][]string, 0)
+	// get all the leafNodes
+	res, errs = exandQuery("%%%%RANGE", store)
+	// if error, crap out
+	if len(errs) > 0 {
+		log.Fatal(errs)
+	}
+	// iterate over the leaf nodes and do a :NODES query
+	for _, i := range *res { // i = leaf node
+		nodes, errs := exandQuery(fmt.Sprintf("%%%s:NODES", i), store)
+		// if error, crap out
+		if len(errs) > 0 {
+			log.Fatal(errs)
+		}
+		for _, j := range *nodes {
+			_, ok := reverseHash[j]
+			if ok {
+				reverseHash[j] = append(reverseHash[j], i)
+			} else {
+				reverseHash[j] = make([]string, 1)
+				reverseHash[j][0] = i
+			}
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	// put the entries into etcd
+	err = createEtcdDir("/_roptimize", client)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for key, value := range reverseHash {
+		err = createEtcdKeyValue("/_roptimize", key, &value, client)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	log.Println("Steps 5 (reverse Lookup Optimization) - DONE")
+
 	// make a note saying, data has been populated
 	_, _ = client.Set("_range_store", "loaded", 0)
 
@@ -134,7 +177,7 @@ func createEtcdDir(dir string, client *etcd.Client) error {
 }
 
 // calls filestore and expands the query
-func exandQuery(query string, store *rangestore.FileStore) (*[]string, []error) {
+func exandQuery(query string, store *filestore.FileStore) (*[]string, []error) {
 	if strings.HasSuffix(query, "_leaf") {
 		return &[]string{"_leaf"}, nil
 	}
