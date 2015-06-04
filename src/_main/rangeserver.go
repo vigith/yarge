@@ -78,7 +78,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request, s interface{}) {
 	results, errs = expandQuery(query, s)
 	t1 := time.Now()
 
-	timetaken := time.Duration(t1.Sub(t0) / time.Microsecond)
+	timetaken := time.Duration(t1.Sub(t0)) / time.Microsecond
 
 	// return the results to the client
 	// set the headers if we have errors
@@ -104,9 +104,9 @@ func requestHandler(w http.ResponseWriter, r *http.Request, s interface{}) {
 	//	log.Println(timetaken, time.Duration(slowlog)*time.Microsecond)
 	if debug || isSlow {
 		if isSlow {
-			log.Printf("INFO> [SLOWQUERY] [%s] %s Result [%s] [Time Taken: %v]", remoteaddr, query, strings.Join(*results, "\n"), timetaken)
+			log.Printf("INFO> [SLOWQUERY] [%s] %s Result %s [Time: %v]", remoteaddr, query, *results, timetaken)
 		} else {
-			log.Printf("DBUG> [%s] %s Result [%s] [Time Taken: %v]", remoteaddr, query, strings.Join(*results, "\n"), timetaken)
+			log.Printf("DBUG> [%s] %s Result %s [Time: %v]", remoteaddr, query, *results, timetaken)
 		}
 	}
 
