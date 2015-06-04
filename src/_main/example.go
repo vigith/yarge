@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-
 	"rangeexpr"
 	"rangestore"
 	"rangestore/etcdstore"
@@ -23,11 +22,14 @@ func main() {
 	store := os.Args[1]
 	expression := os.Args[2]
 	r := &rangeexpr.RangeExpr{Buffer: expression}
+	// initialize
 	r.Init()
 	r.Expression.Init(expression)
+	// parse the query
 	if err := r.Parse(); err != nil {
 		log.Fatal(err)
 	}
+	// build AST
 	r.Execute()
 
 	var _store interface{}
@@ -49,15 +51,19 @@ func main() {
 	default:
 		log.Fatalf(`Unknown store [%s] (Supports only "filestore", "teststore", "etcdstore"\n`, store)
 	}
-	//	var store, err = rangestore.ConnectFileStore("../rangestore/t", 3, false)
+	// if error, exit
 	if err != nil {
 		log.Fatalf("Error in Connecting to Store", err)
 		return
 	}
+	// evaluate AST
 	res, errs := r.Evaluate(_store)
+	// print the result
 	if len(errs) == 0 {
 		fmt.Printf("Result = %s\n", *res)
 	} else {
 		fmt.Printf("errors = %s\n", errs)
 	}
+
+	return
 }
