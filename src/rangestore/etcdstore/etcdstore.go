@@ -300,7 +300,7 @@ func (e *EtcdStore) listClusters(cluster string) ([]string, error) {
 	if err != nil { // got error
 		return []string{}, err
 	} else if !found { // key not found
-		return []string{}, nil
+		return []string{}, errors.New(fmt.Sprintf("No Such Cluster [%s]", cluster))
 	}
 
 	// if response is NOT for a dir
