@@ -1,0 +1,52 @@
+# Author: Vigith Maurice
+
+package rangeexpr
+
+type RangeExpr Peg {
+ Expression
+}
+
+e <- combinedexpr? !.
+
+combinedexpr <- rexpr cexpr?
+
+rexpr <- sp 
+   ( cluster
+   / brackets
+   / value
+   / rlookup
+   )
+
+cexpr <- sp
+   ( union
+   / intersection
+   / difference
+   )
+   sp
+
+union <- ',' rexpr cexpr? { p.addOperator(typeUnion) }
+
+intersection <- ',' sp '&' rexpr cexpr? { p.addOperator(typeIntersection) }
+
+difference <- ',' sp '-' rexpr cexpr? { p.addOperator(typeDifference) }
+
+cluster <- ('%' < 'RANGE' > { p.addValue(buffer[begin:end]); } / '%' rexpr) { p.addOperator(typeClusterLookup) } key?
+
+key <- ':' < [A-Z0-9]+ > { p.addValue(buffer[begin:end]); p.addOperator(typeKeyLookup); }
+
+rlookup <- '*' < [[a-z0-9 .]]+ > { p.addValue(buffer[begin:end]); p.addOperator(typeKeyReverseLookup); } attr? cexpr?
+
+attr <- ';' < [A-Z0-9]+ > { p.addValue(buffer[begin:end]); p.addOperator(typeKeyReverseLookupAttr); } hint?
+
+hint <- ':' value { p.addOperator(typeKeyReverseLookupHint) } 
+
+# start with [:alpha] [:alphanum]? followed with [-a-z0-9] followed by [:alphanum]
+value <- < ( first last? middle+ ) / ( first last* ) > { p.addValue(buffer[begin:end]) }
+# split value into small blocks
+first <- [a-z]+
+middle <- '-' last 
+last <- [a-z0-9]+
+
+brackets <- '(' combinedexpr ')'
+
+sp <- ' '*
