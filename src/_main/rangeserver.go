@@ -80,6 +80,9 @@ func requestHandler(w http.ResponseWriter, r *http.Request, s interface{}) {
 
 	timetaken := time.Duration(t1.Sub(t0)) / time.Microsecond
 
+	// set header with time taken to process thne request
+	w.Header().Set("Range-Expand-Microsecond", fmt.Sprintf("%d", timetaken))
+
 	// return the results to the client
 	// set the headers if we have errors
 	if len(errs) > 0 {
@@ -92,8 +95,6 @@ func requestHandler(w http.ResponseWriter, r *http.Request, s interface{}) {
 		return
 	}
 
-	// set header with time taken to process thne request
-	w.Header().Set("Range-Expand-Microsecond", fmt.Sprintf("%d", timetaken))
 	// write the results
 	_, err = fmt.Fprintf(w, "%s", strings.Join(*results, "\n"))
 	if err != nil {
@@ -133,7 +134,7 @@ func expandQuery(query string, s interface{}) (*[]string, []error) {
 }
 
 func startServer(store interface{}) {
-	// handling deploy requests
+	// handling range requests
 	http.HandleFunc("/v1/range/", genericHandlerV1(requestHandler, store))
 	log.Printf("Range WebServer Started [%s]", serveraddr)
 	if err := http.ListenAndServe(serveraddr, nil); err != nil {
