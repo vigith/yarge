@@ -136,7 +136,9 @@ func startServer(store interface{}) {
 	// handling deploy requests
 	http.HandleFunc("/v1/range/", genericHandlerV1(requestHandler, store))
 	log.Printf("Range WebServer Started [%s]", serveraddr)
-	http.ListenAndServe(serveraddr, nil)
+	if err := http.ListenAndServe(serveraddr, nil); err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
 	return
 }
 
@@ -161,13 +163,22 @@ func main() {
 	switch store {
 	case "teststore":
 		_store, err = rangestore.ConnectTestStore("Test Store") // this can never return error
+		defer func() {
+			_store.(*rangestore.TestStore).DisconnectTestStore()
+		}()
 	case "filestore":
 		var path = params
 		var depth = -1
 		_store, err = filestore.ConnectFileStore(path, depth, fast)
+		defer func() {
+			_store.(*filestore.FileStore).DisconnectFileStore()
+		}()
 	case "etcdstore":
 		var hosts = []string{params}
 		_store, err = etcdstore.ConnectEtcdStore(hosts, roptimize, fast, etcdroot)
+		defer func() {
+			_store.(*etcdstore.EtcdStore).DisconnectEtcdStore()
+		}()
 	default:
 		log.Fatalf(`Unknown store [%s] (Supports only "filestore", "teststore", "etcdstore"\n`, store)
 	}
@@ -186,7 +197,7 @@ func parseFlags() {
 	flag.StringVar(&params, "params", "", "Store Parameters")
 	flag.IntVar(&slowlog, "slowlog", 3, "Microseconds definition of Slow Query")
 	flag.StringVar(&etcdroot, "etcdroot", "", "Root for Range in Etcd Cluster")
-	flag.BoolVar(&fast, "fast", true, "Fast Lookup, return the first result")
+	flag.BoolVar(&fast, "fast", false, "Fast Lookup, return the first result")
 	flag.BoolVar(&roptimize, "roptimize", true, "Reverse Lookup Optimization")
 	flag.StringVar(&serveraddr, "serveraddr", "0.0.0.0:9999", "Server Address")
 	flag.BoolVar(&debug, "debug", false, "Debug")
