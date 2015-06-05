@@ -26,9 +26,11 @@ func main() {
 	results, err := ioutil.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("%s", err)
 	}
-	//	if res.Header.Get() {
-	//	}
-	fmt.Printf("%s\n", results)
+	if res.Header.Get("Range-Err-Count") != "" {
+		fmt.Printf("%s", results)
+	} else {
+		fmt.Printf("%s\n", results)
+	}
 }
