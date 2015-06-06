@@ -215,7 +215,7 @@ func TestClusterLookup(t *testing.T) {
 	cluster = []string{"ops-prod-vpc1-foobar"}
 	expected = []string{}
 	result, err = e.ClusterLookup(&cluster)
-	if err != nil || !compare(*result, expected) {
+	if err == nil || !compare(*result, expected) {
 		t.Errorf("Expected ERROR, Cluster: %s IS NOT Present, Expected: %s, Got: %s (Error: %s)", cluster, expected, *result, err)
 	}
 }
@@ -236,8 +236,8 @@ func TestListClusters(t *testing.T) {
 	node = "ops-foobar"
 	result, err = e.listClusters(node)
 	expected = []string{}
-	if !compare(result, expected) || err != nil {
-		t.Errorf("Expected NO ERROR, node [%s] is not present, Got [result:%s, error:%s]", node, result, err)
+	if !compare(result, expected) || err == nil {
+		t.Errorf("Expected ERROR, node [%s] is not present, Got [result:%s, error:%s]", node, result, err)
 	}
 }
 
