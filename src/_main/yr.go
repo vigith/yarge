@@ -32,7 +32,6 @@ func parseFlags() {
 	flag.BoolVar(&help, "help", false, "enable help")
 	flag.BoolVar(&timing, "timing", false, "enable timing")
 	flag.StringVar(&vip, "vip", "localhost", "vip endpoint")
-
 	flag.Parse()
 	return
 }
