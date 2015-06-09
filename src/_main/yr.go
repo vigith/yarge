@@ -29,21 +29,22 @@ func init() {
 
 func parseFlags() {
 	flag.BoolVar(&debug, "debug", false, "enable debug")
-	flag.BoolVar(&help, "help", false, "enable help")
-	flag.BoolVar(&timing, "timing", false, "enable timing")
-	flag.StringVar(&vip, "vip", "localhost", "vip endpoint")
+	flag.BoolVar(&help, "help", false, "Help")
+	flag.BoolVar(&timing, "timing", false, "display timing")
+	flag.StringVar(&vip, "vip", "localhost", "VIP endpoint")
 	flag.Parse()
 	return
 }
 
 func printHelp() {
-	fmt.Println(
-		`	Usage: rangerclient [OPTIONS] <query>
-	eg: yr %RANGE
-	--debug .................... Run client in debug mode
-	--help ..................... Prints this documentation
-	--timing ................... profiling of execution time
-	--vip ...................... Range vip endpoint`)
+	fmt.Printf(
+		`	Usage: %s [OPTIONS] <query>
+	eg: %s %%RANGE
+	--debug .................... Debug
+	--help ..................... Good Ol' Help
+	--timing ................... Execution Time as provided by rangeserver
+	--vip ...................... Range VIP Endpoint (default: localhost:9999)
+`, os.Args[0], os.Args[0])
 	os.Exit(0)
 	return
 }
@@ -57,21 +58,35 @@ func main() {
 	if vip == "localhost" {
 		vip = "localhost:9999"
 	}
-	res, err := http.Get(fmt.Sprintf("http://%s/v1/range/list?%s", vip, url.QueryEscape(query)))
+
+	url := fmt.Sprintf("http://%s/v1/range/list?%s", vip, url.QueryEscape(query))
+	if debug {
+		fmt.Println("Range URL: ", url)
+	}
+	res, err := http.Get(url)
+	// fatal out if we have error
+	if err != nil || res.StatusCode != 200 {
+		log.Fatalf("Http Error, URL: (%s) Error: (%v)\n", url, err)
+	}
+
+	results, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
-	results, err := ioutil.ReadAll(res.Body)
+
 	res.Body.Close()
-	if err != nil {
-		log.Fatal("%s", err)
+
+	// show the time taken for range expansion (as per the rangeserver)
+	if timing || debug {
+		fmt.Printf("Range-Expand-Microsecond: %s \n", res.Header.Get("Range-Expand-Microsecond"))
 	}
+
+	// if error, print the error
 	if res.Header.Get("Range-Err-Count") != "" {
 		fmt.Printf("%s", results)
-	} else {
+	} else { // else print the result
 		fmt.Printf("%s\n", results)
 	}
-	if timing == true {
-		fmt.Printf("Range-Expand-Microsecond : %sms \n", res.Header.Get("Range-Expand-Microsecond"))
-	}
+
+	return
 }
