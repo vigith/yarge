@@ -35,7 +35,7 @@ for the old range, since this understands only a subset of features and also hav
   * `*value;KEY:HINT` == get the cluster where KEY=value, HINT is to scope within a toplevel
   * `%*value`     == cluster operation on reverse lookup
   * `%*value;KEY` == cluster operation on reverse lookup with KEY where KEY=value
-  * `%*value;KEY:HINT` == cluster operation on reverse lookup with KEY where KEY=value, HINT is to scope within a toplevel
+  * `%*value;KEY:HINT` == cluster operation on reverse lookup where KEY=value, HINT is to scope within a toplevel
 
 I would suggest you to read `rangeexpr.peg` to understand all the possbile query combinations. The AST evaluator evaluates from Right to Left.
 
