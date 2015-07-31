@@ -3,3 +3,6 @@ AUTHORS:
 
 NODES:
   - mon1001.ops.example.com
+
+VERSION:
+  - "1.0.0.1"

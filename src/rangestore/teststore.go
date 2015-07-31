@@ -172,6 +172,8 @@ func queryMap(cluster string, key string) (*[]string, error) {
 			return &[]string{"mon1001.ops.example.com"}, nil
 		} else if key == "AUTHORS" {
 			return &[]string{"Ops"}, nil
+		} else if key == "VERSION" {
+			return &[]string{"1.0.0.1"}, nil
 		} else if key == "KEYS" {
 			return &[]string{"NODES", "AUTHORS"}, nil
 		} else {
@@ -332,9 +334,21 @@ func queryMapRev(key string, attr string, hint string) (*[]string, error) {
 
 	case "Ops":
 		if attr == "AUTHORS" {
-			if hint == "ops-prod-vpc1-mon" || hint == "ops-prod-vpc2-mon" || hint == "" {
+			if hint == "ops-prod-vpc1-mon" || hint == "ops-prod-vpc2-mon" || hint == "ops-prod" || hint == "ops" || hint == "" {
 				if hint == "" {
 					return &[]string{"ops-prod-vpc1-mon", "ops-prod-vpc2-mon"}, nil
+				} else {
+					return &[]string{hint}, nil
+				}
+			}
+			return &[]string{}, errors.New("Did not find any reverse lookup entry")
+		}
+
+	case "1.0.0.1":
+		if attr == "VERSION" {
+			if hint == "ops-prod-vpc1-mon" || hint == "ops-prod-vpc1" || hint == "ops-prod" || hint == "ops" || hint == "" {
+				if hint == "" {
+					return &[]string{"ops-prod-vpc1-mon"}, nil
 				} else {
 					return &[]string{hint}, nil
 				}
