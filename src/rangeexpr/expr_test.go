@@ -591,6 +591,25 @@ func TestRevParsing06(t *testing.T) {
 	}
 }
 
+// "%(*1.0.0.1;VERSION), ops-prod-vpc1-range"
+func TestRevParsing07(t *testing.T) {
+	var q = "%(*1.0.0.1;VERSION), ops-prod-vpc1-range"
+	var r = &RangeExpr{Buffer: q}
+	r.Init()
+	r.Expression.Init(q)
+	err := r.Parse()
+	if err != nil {
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [reverse lookup with attr and hint]", q)
+	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"mon1001.ops.example.com", "ops-prod-vpc1-range"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
+}
+
 // Internal Function
 
 // Compare 2 Arrays, items need not be in correct order
