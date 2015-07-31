@@ -30,7 +30,7 @@ intersection <- ',' sp '&' rexpr cexpr? { p.addOperator(typeIntersection) }
 
 difference <- ',' sp '-' rexpr cexpr? { p.addOperator(typeDifference) }
 
-cluster <- ('%' < 'RANGE' > { p.addValue(buffer[begin:end]); } / '%' rexpr) { p.addOperator(typeClusterLookup) } key?
+cluster <- ('%' < 'RANGE' > { p.addValue(buffer[begin:end]); } / '%' rexpr / '%' rlookup) { p.addOperator(typeClusterLookup) } key?
 
 key <- ':' < [A-Z0-9]+ > { p.addValue(buffer[begin:end]); p.addOperator(typeKeyLookup); }
 
