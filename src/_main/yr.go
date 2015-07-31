@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 )
 
 //globals
@@ -59,14 +60,17 @@ func main() {
 		vip = "localhost:9999"
 	}
 
-	url := fmt.Sprintf("http://%s/v1/range/list?%s", vip, url.QueryEscape(query))
+	_url := fmt.Sprintf("http://%s/v1/range/list?%s", vip, url.QueryEscape(query))
 	if debug {
-		fmt.Println("Range URL: ", url)
+		fmt.Println("Range URL: ", _url)
 	}
-	res, err := http.Get(url)
+	res, err := http.Get(_url)
 	// fatal out if we have error
 	if err != nil || res.StatusCode != 200 {
-		log.Fatalf("Http Error, URL: (%s) Error: (%v)\n", url, err)
+		_url_human, _ := url.QueryUnescape(_url)
+		results, _ := ioutil.ReadAll(res.Body)
+		log.Printf("ERROR, URL: (%s) Error: (%s) HTTP_Errors: (%v)\n", _url_human, strings.TrimSuffix(string(results), "\n"), err)
+		os.Exit(1)
 	}
 
 	results, err := ioutil.ReadAll(res.Body)
@@ -83,7 +87,7 @@ func main() {
 
 	// if error, print the error
 	if res.Header.Get("Range-Err-Count") != "" {
-		fmt.Printf("%s", results)
+		fmt.Printf("%s", res.Header.Get("Range-Err-Count"))
 	} else { // else print the result
 		fmt.Printf("%s\n", results)
 	}
