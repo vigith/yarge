@@ -28,10 +28,14 @@ for the old range, since this understands only a subset of features and also hav
   * `%RANGE`   == toplevel (here RANGE is a keyword)
   * `%%RANGE`  == second level (here RANGE is a keyword)
   * `%%range1` == second level w.r.t `range1`
-  * `%%range1:KEY` == expand `%range1:KEY` and expand the result
+  * `%%range1:KEY`  == expand `%range1:KEY` and expand the result
+  * `%%range1:KEYS` == returns all the keys present in `range`
   * `*hostname`  == get cluster where this hostname is present
   * `*value;KEY` == get the cluster where KEY=value
   * `*value;KEY:HINT` == get the cluster where KEY=value, HINT is to scope within a toplevel
+  * `%*value`     == cluster operation on reverse lookup
+  * `%*value;KEY` == cluster operation on reverse lookup with KEY where KEY=value
+  * `%*value;KEY:HINT` == cluster operation on reverse lookup with KEY where KEY=value, HINT is to scope within a toplevel
 
 I would suggest you to read `rangeexpr.peg` to understand all the possbile query combinations. The AST evaluator evaluates from Right to Left.
 
