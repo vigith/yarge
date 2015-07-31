@@ -58,11 +58,13 @@ func TestMain(m *testing.M) {
 	var roptimize = false
 	var efast = false
 	var node = ""
-	log.Println("Testing using EtcdStore")
 	store, err = etcdstore.ConnectEtcdStore(hosts, roptimize, efast, node)
 	if err != nil {
-		log.Fatal("ConnectEtcdStore ", err)
+		// lets die more gracefully!
+		log.Println("NOT Testing using EtcdStore")
+		os.Exit(0)
 	}
+	log.Println("Testing using EtcdStore")
 
 	// run all the test with store == EtcdStore
 	status = m.Run()
@@ -565,6 +567,25 @@ func TestRevParsing05(t *testing.T) {
 	r.Execute()
 	result, errs := r.Evaluate(store)
 	var expected = []string{"ops-prod-vpc1-mon", "ops-prod-vpc1-range", "ops-prod-vpc2-mon"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
+}
+
+// "*1.0.0.1;VERSION"
+func TestRevParsing06(t *testing.T) {
+	var q = "*1.0.0.1;VERSION"
+	var r = &RangeExpr{Buffer: q}
+	r.Init()
+	r.Expression.Init(q)
+	err := r.Parse()
+	if err != nil {
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [reverse lookup with attr and hint]", q)
+	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"ops-prod-vpc1-mon"}
 	if len(errs) != 0 || !compare(*result, expected) {
 		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
 	}
