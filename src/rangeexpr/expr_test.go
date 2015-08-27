@@ -87,16 +87,16 @@ func TestParsing00(t *testing.T) {
 	}
 }
 
-// "1"
+// "-1"
 // starts with a numeric
 func TestParsing01(t *testing.T) {
-	var q = "1"
+	var q = "-1"
 	var r = &RangeExpr{Buffer: q}
 	r.Init()
 	r.Expression.Init(q)
 	err := r.Parse()
 	if err == nil {
-		t.Errorf("Expected Error, (Query: %s) should NOT BE parsed [starts with 0-9]", q)
+		t.Errorf("Expected Error, (Query: %s) should NOT BE parsed [starts with -]", q)
 	}
 }
 
@@ -223,6 +223,86 @@ func TestParsing09(t *testing.T) {
 	r.Execute()
 	result, errs := r.Evaluate(store)
 	var expected = []string{"ops-prod", "data-prod", "data-qa"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
+}
+
+// "a.b.c.d"
+// valid intersection operator query
+func TestParsing10(t *testing.T) {
+	var q = "a.b.c.d"
+	var r = &RangeExpr{Buffer: q}
+	r.Init()
+	r.Expression.Init(q)
+	err := r.Parse()
+	if err != nil {
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed (a.b.c.d is valid ip)", q)
+	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"a.b.c.d"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
+}
+
+// "a-b-c-d"
+// valid intersection operator query
+func TestParsing11(t *testing.T) {
+	var q = "a-b-c-d"
+	var r = &RangeExpr{Buffer: q}
+	r.Init()
+	r.Expression.Init(q)
+	err := r.Parse()
+	if err != nil {
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed (a.b.c.d is valid ip)", q)
+	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"a-b-c-d"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
+}
+
+// "1-2-3-4"
+// valid intersection operator query
+func TestParsing12(t *testing.T) {
+	var q = "1-2-3-4"
+	var r = &RangeExpr{Buffer: q}
+	r.Init()
+	r.Expression.Init(q)
+	err := r.Parse()
+	if err != nil {
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed (a.b.c.d is valid ip)", q)
+	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"1-2-3-4"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
+}
+
+// "1.2.3.4"
+// valid intersection operator query
+func TestParsing13(t *testing.T) {
+	var q = "1.2.3.4"
+	var r = &RangeExpr{Buffer: q}
+	r.Init()
+	r.Expression.Init(q)
+	err := r.Parse()
+	if err != nil {
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed (a.b.c.d is valid ip)", q)
+	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"1.2.3.4"}
 	if len(errs) != 0 || !compare(*result, expected) {
 		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
 	}
