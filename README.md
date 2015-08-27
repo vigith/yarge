@@ -37,7 +37,7 @@ for the old range, since this understands only a subset of features and also hav
   * `%(%range1:FOO,(%range1:BAR ,& %range2:MOO))` == set operations with grouping using brackets
   * `%(*value1;KEY1:HINT1 ,& *value2;KEY2:HINT2)` == cluster lookup the result of a set operation done on reverse lookups
 
-I would suggest you to read `rangeexpr.peg` to understand all the possbile query combinations. The AST evaluator evaluates from Right to Left.
+I would suggest you to read `expr.peg` to understand all the possbile query combinations. The AST evaluator evaluates from Right to Left.
 
 ## Deployment
 
