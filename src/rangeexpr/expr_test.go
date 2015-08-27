@@ -610,6 +610,65 @@ func TestRevParsing07(t *testing.T) {
 	}
 }
 
+// "*(range1001.ops.example.com)"
+func TestRevParsing08(t *testing.T) {
+	var q = "*(range1001.ops.example.com)"
+	var r = &RangeExpr{Buffer: q}
+	r.Init()
+	r.Expression.Init(q)
+	err := r.Parse()
+	if err != nil {
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [reverse lookup with attr and hint]", q)
+	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"ops-prod-vpc1-range"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
+}
+
+// "*(%(*range1001.ops.example.com):AUTHORS);AUTHORS"
+func TestRevParsing09(t *testing.T) {
+	var q = "*(%(*range1001.ops.example.com):AUTHORS);AUTHORS"
+	var r = &RangeExpr{Buffer: q}
+	r.Init()
+	r.Expression.Init(q)
+	err := r.Parse()
+	if err != nil {
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [reverse lookup with attr and hint]", q)
+	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+
+	var expected = []string{"ops-prod-vpc1-range"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
+}
+
+// "%(*(%(*range1001.ops.example.com):AUTHORS);AUTHORS)"
+func TestRevParsing10(t *testing.T) {
+	var q = "%(*(%(*range1001.ops.example.com):AUTHORS);AUTHORS)"
+	var r = &RangeExpr{Buffer: q}
+	r.Init()
+	r.Expression.Init(q)
+	err := r.Parse()
+	if err != nil {
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [reverse lookup with attr and hint]", q)
+	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+
+	var expected = []string{"range1001.ops.example.com", "range1002.ops.example.com", "range1003.ops.example.com"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
+}
+
 // Internal Function
 
 // Compare 2 Arrays, items need not be in correct order
