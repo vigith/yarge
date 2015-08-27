@@ -45,9 +45,9 @@ hint <- ':' value { p.addOperator(typeKeyReverseLookupHint) }
 # start with [:alpha] [:alphanum]? followed with [-a-z0-9] followed by [:alphanum]
 value <- < ( first last? middle+ ) / ( first last* ) > { p.addValue(buffer[begin:end]) }
 # split value into small blocks
-first <- [a-z]+
-middle <- '-' last 
-last <- [a-z0-9]+
+first <- [a-z0-9]+
+middle <- ( '-' / '.' ) last 
+last <- first
 
 brackets <- '(' combinedexpr ')'
 
