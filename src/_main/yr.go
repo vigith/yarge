@@ -45,6 +45,8 @@ func printHelp() {
 	--help ..................... Good Ol' Help
 	--timing ................... Execution Time as provided by rangeserver
 	--vip ...................... Range VIP Endpoint (default: localhost:9999)
+
+Documentation: https://github.com/vigith/yarge
 `, os.Args[0], os.Args[0])
 	os.Exit(0)
 	return
