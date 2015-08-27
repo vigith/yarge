@@ -34,15 +34,9 @@ cluster <- ('%' < 'RANGE' > { p.addValue(buffer[begin:end]); } / '%' yrexpr / '%
 
 key <- ':' < [A-Z0-9]+ > { p.addValue(buffer[begin:end]); p.addOperator(typeKeyLookup); }
 
-rlookup <- '*' ( rbrackets / rvalue ) { p.addOperator(typeKeyReverseLookup); } attr? cexpr?
-
-# order is very important, rvalue should be used before yrexpr
-# because we should not use value terminal instead of rvalue
-# yrexpr has value as a case (value accepts only a subset of chars)
-rbrackets <- '(' ( rlookup / rvalue / yrexpr ) ')'
+rlookup <- '*' rvalue { p.addOperator(typeKeyReverseLookup); } attr? cexpr?
 
 rvalue <- < [[a-z0-9- .]]+ > { p.addValue(buffer[begin:end]) }
-
 
 attr <- ';' < [A-Z0-9]+ > { p.addValue(buffer[begin:end]); p.addOperator(typeKeyReverseLookupAttr); } hint?
 
