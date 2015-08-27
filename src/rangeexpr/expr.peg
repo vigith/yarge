@@ -8,11 +8,11 @@ type RangeExpr Peg {
 
 e <- combinedexpr? !.
 
-combinedexpr <- rexpr cexpr?
+combinedexpr <- yrexpr cexpr?
 
-rexpr <- sp 
-   ( cluster
-   / brackets
+yrexpr <- sp 
+   ( brackets
+   / cluster
    / value
    / rlookup
    )
@@ -24,17 +24,25 @@ cexpr <- sp
    )
    sp
 
-union <- ',' rexpr cexpr? { p.addOperator(typeUnion) }
+union <- ',' yrexpr cexpr? { p.addOperator(typeUnion) }
 
-intersection <- ',' sp '&' rexpr cexpr? { p.addOperator(typeIntersection) }
+intersection <- ',' sp '&' yrexpr cexpr? { p.addOperator(typeIntersection) }
 
-difference <- ',' sp '-' rexpr cexpr? { p.addOperator(typeDifference) }
+difference <- ',' sp '-' yrexpr cexpr? { p.addOperator(typeDifference) }
 
-cluster <- ('%' < 'RANGE' > { p.addValue(buffer[begin:end]); } / '%' rexpr / '%' rlookup) { p.addOperator(typeClusterLookup) } key?
+cluster <- ('%' < 'RANGE' > { p.addValue(buffer[begin:end]); } / '%' yrexpr / '%' rlookup) { p.addOperator(typeClusterLookup) } key?
 
 key <- ':' < [A-Z0-9]+ > { p.addValue(buffer[begin:end]); p.addOperator(typeKeyLookup); }
 
-rlookup <- '*' < [[a-z0-9- .]]+ > { p.addValue(buffer[begin:end]); p.addOperator(typeKeyReverseLookup); } attr? cexpr?
+rlookup <- '*' ( rbrackets / rvalue ) { p.addOperator(typeKeyReverseLookup); } attr? cexpr?
+
+# order is very important, rvalue should be used before yrexpr
+# because we should not use value terminal instead of rvalue
+# yrexpr has value as a case (value accepts only a subset of chars)
+rbrackets <- '(' ( rlookup / rvalue / yrexpr ) ')'
+
+rvalue <- < [[a-z0-9- .]]+ > { p.addValue(buffer[begin:end]) }
+
 
 attr <- ';' < [A-Z0-9]+ > { p.addValue(buffer[begin:end]); p.addOperator(typeKeyReverseLookupAttr); } hint?
 
