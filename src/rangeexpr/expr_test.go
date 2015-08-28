@@ -496,6 +496,28 @@ func TestParsingComb10(t *testing.T) {
 	}
 }
 
+// "%(*Ops;AUTHORS):AUTHORS"
+// Should return only 1 value (*Ops;AUTHORS returns
+// 2 results, so :AUTHORS should return 1+, but
+// it will return only 1 due to de-duping)
+func TestParsingComb11(t *testing.T) {
+	var q = "%(*Ops;AUTHORS):AUTHORS"
+	var r = &RangeExpr{Buffer: q}
+	r.Init()
+	r.Expression.Init(q)
+	err := r.Parse()
+	if err != nil {
+		t.Errorf("Expected NO Error, (Query: %s) should BE parsed [Combined Expression (union + Key Lookup + De-Duping)]", q)
+	}
+
+	r.Execute()
+	result, errs := r.Evaluate(store)
+	var expected = []string{"Ops"}
+	if len(errs) != 0 || !compare(*result, expected) {
+		t.Errorf("Expected NO Evaluate Error, (Query: %s) should BE %s [Got: %s]", q, expected, *result)
+	}
+}
+
 /* KEYS */
 
 // "%ops-prod-vpc1-range:AUTHORS"

@@ -148,7 +148,15 @@ func (e *Expression) Evaluate(s interface{}) (*[]string, []error) {
 		case typeKeyLookup:
 			result, err := store.KeyLookup(stack[top-2], (*stack[top-1])[0])
 			// store the addr of the result
-			stack[top-2] = result
+			// we will have to de-dup if stack[top-2] has more than 1 element
+			// 'coz there could intersecting elements for KEY in different clusters
+			if len(*(stack[top-2])) == 1 {
+				stack[top-2] = result
+			} else {
+				// conver to a set
+				rangeops.ArrayToSet(result)
+				stack[top-2] = result
+			}
 			// reset top to nil, that value is no more useful to us
 			stack[top-1] = nil
 			// binary operator, pops of 2 elements to produce a result
